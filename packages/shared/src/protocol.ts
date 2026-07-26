@@ -15,24 +15,19 @@ export type BridgeHelloAck = {
 
 export type CommandAction =
   | "navigate"
+  | "new_tab"
+  | "list_tabs"
   | "back"
   | "forward"
   | "click"
   | "type"
   | "keypress"
+  | "scroll"
   | "read_dom"
   | "screenshot"
-  | "attach_debugger"
-  | "detach_debugger"
-  | "debugger_status"
-  | "cdp_command"
-  | "cdp_click"
-  | "cdp_type"
-  | "cdp_keypress"
-  | "cdp_scroll"
-  | "cdp_wait_for_selector"
+  | "wait_for_selector"
   | "wait_for_navigation"
-  | "cdp_screenshot";
+  | "cdp_command";
 
 export type BridgeCommand = {
   type: "command";

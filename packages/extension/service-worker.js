@@ -253,208 +253,69 @@ async function executeInTab(tabId, func, args = []) {
 async function handleCommand(action, params) {
   const tab = await getActiveTab();
 
+  if (action === "list_tabs") {
+    const tabs = await chrome.tabs.query({});
+    return {
+      ok: true,
+      tabs: tabs.map((t) => ({
+        id: t.id,
+        windowId: t.windowId,
+        url: t.url,
+        title: t.title,
+        active: t.active,
+        status: t.status,
+      })),
+      activeTabId: tab.id,
+    };
+  }
+
+  if (action === "new_tab") {
+    const url = typeof params.url === "string" ? params.url : undefined;
+    const newTab = await chrome.tabs.create({ url, active: params.active !== false });
+    return { ok: true, tabId: newTab.id, url: newTab.pendingUrl ?? newTab.url };
+  }
+
   if (action === "navigate") {
     if (!params.url || typeof params.url !== "string") {
       throw new Error("Missing url");
     }
-    await chrome.tabs.update(tab.id, { url: params.url });
-    return { ok: true, tabId: tab.id, url: params.url };
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    await chrome.tabs.update(targetTabId, { url: params.url });
+    return { ok: true, tabId: targetTabId, url: params.url };
   }
 
   if (action === "back") {
-    const result = await executeInTab(
-      tab.id,
-      () => {
-        history.back();
-        return { ok: true };
-      },
-      [],
-    );
+    const result = await executeInTab(tab.id, () => { history.back(); return { ok: true }; }, []);
     return { ...result, tabId: tab.id };
   }
 
   if (action === "forward") {
-    const result = await executeInTab(
-      tab.id,
-      () => {
-        history.forward();
-        return { ok: true };
-      },
-      [],
-    );
+    const result = await executeInTab(tab.id, () => { history.forward(); return { ok: true }; }, []);
     return { ...result, tabId: tab.id };
   }
 
   if (action === "click") {
-    return executeInTab(
-      tab.id,
-      (selector) => {
-        const el = document.querySelector(selector);
-        if (!(el instanceof HTMLElement)) {
-          throw new Error(`Element not found: ${selector}`);
-        }
-        el.click();
-        return { ok: true, selector };
-      },
-      [params.selector],
-    );
-  }
-
-  if (action === "type") {
-    return executeInTab(
-      tab.id,
-      (selector, text, submit) => {
-        const el = document.querySelector(selector);
-        if (!(el instanceof HTMLElement)) {
-          throw new Error(`Element not found: ${selector}`);
-        }
-
-        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
-          el.focus();
-          el.value = text;
-          el.dispatchEvent(new Event("input", { bubbles: true }));
-          el.dispatchEvent(new Event("change", { bubbles: true }));
-          if (submit) {
-            el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-          }
-          return { ok: true, selector, textLength: text.length };
-        }
-
-        el.focus();
-        document.execCommand("insertText", false, text);
-        if (submit) {
-          el.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-        }
-        return { ok: true, selector, textLength: text.length };
-      },
-      [params.selector, params.text, Boolean(params.submit)],
-    );
-  }
-
-  if (action === "keypress") {
-    return executeInTab(
-      tab.id,
-      (key, ctrlKey, shiftKey, altKey, metaKey) => {
-        const target = document.activeElement ?? document.body;
-        const eventInit = { key, ctrlKey, shiftKey, altKey, metaKey, bubbles: true };
-        target.dispatchEvent(new KeyboardEvent("keydown", eventInit));
-        target.dispatchEvent(new KeyboardEvent("keypress", eventInit));
-        target.dispatchEvent(new KeyboardEvent("keyup", eventInit));
-        return { ok: true, key };
-      },
-      [params.key, Boolean(params.ctrlKey), Boolean(params.shiftKey), Boolean(params.altKey), Boolean(params.metaKey)],
-    );
-  }
-
-  if (action === "read_dom") {
-    return executeInTab(
-      tab.id,
-      (maxChars) => {
-        const html = document.documentElement?.outerHTML ?? "";
-        const cut = Math.max(1, Number(maxChars) || 200000);
-        return {
-          ok: true,
-          url: location.href,
-          title: document.title,
-          htmlLength: html.length,
-          truncated: html.length > cut,
-          html: html.slice(0, cut),
-        };
-      },
-      [params.maxChars],
-    );
-  }
-
-  if (action === "screenshot") {
-    const dataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, { format: "png" });
-    return { ok: true, tabId: tab.id, dataUrl };
-  }
-
-  if (action === "attach_debugger") {
-    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
-    const result = await attachDebugger(targetTabId);
-    return { ok: true, tabId: targetTabId, ...result };
-  }
-
-  if (action === "detach_debugger") {
-    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
-    const result = await detachDebugger(targetTabId);
-    return { ok: true, tabId: targetTabId, ...result };
-  }
-
-  if (action === "debugger_status") {
-    return {
-      ok: true,
-      activeTabId: tab.id,
-      activeTabAttached: debuggerAttachedTabs.has(tab.id),
-      attachedTabIds: [...debuggerAttachedTabs.values()],
-    };
-  }
-
-  if (action === "cdp_command") {
-    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
-    const method = typeof params.method === "string" ? params.method : "";
-    const commandParams = params.commandParams && typeof params.commandParams === "object" ? params.commandParams : {};
-    const autoAttach = params.autoAttach !== false;
-
-    if (!method) {
-      throw new Error("Missing CDP method");
-    }
-
-    if (autoAttach && !debuggerAttachedTabs.has(targetTabId)) {
-      await attachDebugger(targetTabId);
-    }
-
-    const result = await sendDebuggerCommand(targetTabId, method, commandParams);
-    return { ok: true, tabId: targetTabId, method, result };
-  }
-
-  if (action === "cdp_click") {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
     const selector = typeof params.selector === "string" ? params.selector : "";
     const clickCount = Number.isInteger(params.clickCount) ? params.clickCount : 1;
     const button = cdpButtonToInputButton(params.button);
 
-    if (!selector) {
-      throw new Error("Missing selector");
-    }
+    if (!selector) throw new Error("Missing selector");
 
     await ensureDebuggerAttached(targetTabId);
     await sendDebuggerCommand(targetTabId, "Page.enable", {});
 
     const point = await cdpFindElementCenter(targetTabId, selector);
-    if (!point?.ok) {
-      throw new Error(point?.error ?? "Failed to resolve element position");
-    }
+    if (!point?.ok) throw new Error(point?.error ?? "Failed to resolve element position");
 
-    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
-      type: "mouseMoved",
-      x: point.x,
-      y: point.y,
-      button,
-      clickCount,
-    });
-
-    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
-      type: "mousePressed",
-      x: point.x,
-      y: point.y,
-      button,
-      clickCount,
-    });
-
-    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
-      type: "mouseReleased",
-      x: point.x,
-      y: point.y,
-      button,
-      clickCount,
-    });
+    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", { type: "mouseMoved", x: point.x, y: point.y, button, clickCount });
+    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", { type: "mousePressed", x: point.x, y: point.y, button, clickCount });
+    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", { type: "mouseReleased", x: point.x, y: point.y, button, clickCount });
 
     return { ok: true, tabId: targetTabId, selector, x: point.x, y: point.y, button, clickCount };
   }
 
-  if (action === "cdp_type") {
+  if (action === "type") {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
     const selector = typeof params.selector === "string" ? params.selector : "";
     const text = typeof params.text === "string" ? params.text : "";
@@ -462,16 +323,12 @@ async function handleCommand(action, params) {
     const submit = params.submit === true;
     const delayMs = Number.isFinite(Number(params.delayMs)) ? Math.max(0, Number(params.delayMs)) : 0;
 
-    if (!selector) {
-      throw new Error("Missing selector");
-    }
+    if (!selector) throw new Error("Missing selector");
 
     await ensureDebuggerAttached(targetTabId);
 
     const focusResult = await cdpFocusElement(targetTabId, selector, clear);
-    if (!focusResult?.ok) {
-      throw new Error(focusResult?.error ?? "Failed to focus element");
-    }
+    if (!focusResult?.ok) throw new Error(focusResult?.error ?? "Failed to focus element");
 
     if (delayMs > 0) {
       for (const char of text) {
@@ -482,56 +339,31 @@ async function handleCommand(action, params) {
       await sendDebuggerCommand(targetTabId, "Input.insertText", { text });
     }
 
-    if (submit) {
-      await cdpDispatchEnter(targetTabId);
-    }
+    if (submit) await cdpDispatchEnter(targetTabId);
 
     return { ok: true, tabId: targetTabId, selector, textLength: text.length, clear, submit, delayMs };
   }
 
-  if (action === "cdp_keypress") {
+  if (action === "keypress") {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
     const key = typeof params.key === "string" && params.key.length > 0 ? params.key : "";
     const code = typeof params.code === "string" && params.code.length > 0 ? params.code : key;
     const windowsVirtualKeyCode = Number.isInteger(params.windowsVirtualKeyCode)
       ? params.windowsVirtualKeyCode
-      : key.length === 1
-        ? key.toUpperCase().charCodeAt(0)
-        : 0;
-    const modifiers =
-      (params.altKey ? 1 : 0) +
-      (params.ctrlKey ? 2 : 0) +
-      (params.metaKey ? 4 : 0) +
-      (params.shiftKey ? 8 : 0);
+      : key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0;
+    const modifiers = (params.altKey ? 1 : 0) + (params.ctrlKey ? 2 : 0) + (params.metaKey ? 4 : 0) + (params.shiftKey ? 8 : 0);
 
-    if (!key) {
-      throw new Error("Missing key");
-    }
+    if (!key) throw new Error("Missing key");
 
     await ensureDebuggerAttached(targetTabId);
 
-    await sendDebuggerCommand(targetTabId, "Input.dispatchKeyEvent", {
-      type: "keyDown",
-      key,
-      code,
-      windowsVirtualKeyCode,
-      nativeVirtualKeyCode: windowsVirtualKeyCode,
-      modifiers,
-    });
-
-    await sendDebuggerCommand(targetTabId, "Input.dispatchKeyEvent", {
-      type: "keyUp",
-      key,
-      code,
-      windowsVirtualKeyCode,
-      nativeVirtualKeyCode: windowsVirtualKeyCode,
-      modifiers,
-    });
+    await sendDebuggerCommand(targetTabId, "Input.dispatchKeyEvent", { type: "keyDown", key, code, windowsVirtualKeyCode, nativeVirtualKeyCode: windowsVirtualKeyCode, modifiers });
+    await sendDebuggerCommand(targetTabId, "Input.dispatchKeyEvent", { type: "keyUp", key, code, windowsVirtualKeyCode, nativeVirtualKeyCode: windowsVirtualKeyCode, modifiers });
 
     return { ok: true, tabId: targetTabId, key, code, modifiers };
   }
 
-  if (action === "cdp_scroll") {
+  if (action === "scroll") {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
     const deltaX = Number.isFinite(Number(params.deltaX)) ? Number(params.deltaX) : 0;
     const deltaY = Number.isFinite(Number(params.deltaY)) ? Number(params.deltaY) : 500;
@@ -543,29 +375,61 @@ async function handleCommand(action, params) {
     const x = viewport.result?.value?.x ?? 0;
     const y = viewport.result?.value?.y ?? 0;
 
-    for (let i = 0; i < steps; i += 1) {
-      await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
-        type: "mouseWheel",
-        x,
-        y,
-        deltaX,
-        deltaY,
-      });
+    for (let i = 0; i < steps; i++) {
+      await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", { type: "mouseWheel", x, y, deltaX, deltaY });
     }
 
     return { ok: true, tabId: targetTabId, x, y, deltaX, deltaY, steps };
   }
 
-  if (action === "cdp_wait_for_selector") {
+  if (action === "read_dom") {
+    return executeInTab(
+      tab.id,
+      (maxChars) => {
+        const html = document.documentElement?.outerHTML ?? "";
+        const cut = Math.max(1, Number(maxChars) || 200000);
+        return { ok: true, url: location.href, title: document.title, htmlLength: html.length, truncated: html.length > cut, html: html.slice(0, cut) };
+      },
+      [params.maxChars],
+    );
+  }
+
+  if (action === "screenshot") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const fullPage = params.fullPage === true;
+    const format = params.format === "jpeg" ? "jpeg" : "png";
+    const quality = Number.isInteger(params.quality) ? Math.max(1, Math.min(100, params.quality)) : 90;
+
+    await ensureDebuggerAttached(targetTabId);
+    await sendDebuggerCommand(targetTabId, "Page.enable", {});
+
+    const captureParams = {
+      format,
+      quality: format === "jpeg" ? quality : undefined,
+      fromSurface: true,
+      captureBeyondViewport: fullPage,
+    };
+
+    if (fullPage) {
+      const metrics = await sendDebuggerCommand(targetTabId, "Page.getLayoutMetrics", {});
+      const contentSize = metrics?.contentSize;
+      if (contentSize?.width && contentSize?.height) {
+        captureParams.clip = { x: 0, y: 0, width: contentSize.width, height: contentSize.height, scale: 1 };
+      }
+    }
+
+    const shot = await sendDebuggerCommand(targetTabId, "Page.captureScreenshot", captureParams);
+    return { ok: true, tabId: targetTabId, fullPage, format, dataUrl: `data:image/${format};base64,${shot.data}` };
+  }
+
+  if (action === "wait_for_selector") {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
     const selector = typeof params.selector === "string" ? params.selector : "";
     const timeoutMs = Number.isFinite(Number(params.timeoutMs)) ? Math.max(100, Number(params.timeoutMs)) : 10000;
     const pollMs = Number.isFinite(Number(params.pollMs)) ? Math.max(25, Number(params.pollMs)) : 200;
-    const visible = params.visible === true;
+    const visible = params.visible !== false;
 
-    if (!selector) {
-      throw new Error("Missing selector");
-    }
+    if (!selector) throw new Error("Missing selector");
 
     await ensureDebuggerAttached(targetTabId);
 
@@ -577,12 +441,8 @@ async function handleCommand(action, params) {
           const selector = ${jsString(selector)};
           const visible = ${visible ? "true" : "false"};
           const el = document.querySelector(selector);
-          if (!el) {
-            return { found: false, visible: false };
-          }
-          if (!visible) {
-            return { found: true, visible: true };
-          }
+          if (!el) return { found: false, visible: false };
+          if (!visible) return { found: true, visible: true };
           const rect = el.getBoundingClientRect();
           const style = window.getComputedStyle(el);
           const ok = rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none";
@@ -615,13 +475,7 @@ async function handleCommand(action, params) {
       const matchesUrl = !urlIncludes || url.includes(urlIncludes);
 
       if (status === "complete" && matchesUrl) {
-        return {
-          ok: true,
-          tabId: targetTabId,
-          status,
-          url,
-          elapsedMs: Date.now() - start,
-        };
+        return { ok: true, tabId: targetTabId, status, url, elapsedMs: Date.now() - start };
       }
 
       await sleep(pollMs);
@@ -630,47 +484,19 @@ async function handleCommand(action, params) {
     throw new Error("Timed out waiting for navigation");
   }
 
-  if (action === "cdp_screenshot") {
+  if (action === "cdp_command") {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
-    const fullPage = params.fullPage === true;
-    const format = params.format === "jpeg" ? "jpeg" : "png";
-    const quality = Number.isInteger(params.quality) ? Math.max(1, Math.min(100, params.quality)) : 90;
+    const method = typeof params.method === "string" ? params.method : "";
+    const commandParams = params.commandParams && typeof params.commandParams === "object" ? params.commandParams : {};
+
+    if (!method) throw new Error("Missing CDP method");
 
     await ensureDebuggerAttached(targetTabId);
-    await sendDebuggerCommand(targetTabId, "Page.enable", {});
 
-    const captureParams = {
-      format,
-      quality: format === "jpeg" ? quality : undefined,
-      fromSurface: true,
-      captureBeyondViewport: fullPage,
-    };
-
-    if (fullPage) {
-      const metrics = await sendDebuggerCommand(targetTabId, "Page.getLayoutMetrics", {});
-      const contentSize = metrics?.contentSize;
-      if (contentSize?.width && contentSize?.height) {
-        captureParams.clip = {
-          x: 0,
-          y: 0,
-          width: contentSize.width,
-          height: contentSize.height,
-          scale: 1,
-        };
-      }
-    }
-
-    const shot = await sendDebuggerCommand(targetTabId, "Page.captureScreenshot", captureParams);
-    return {
-      ok: true,
-      tabId: targetTabId,
-      fullPage,
-      format,
-      dataUrl: `data:image/${format};base64,${shot.data}`,
-    };
+    const result = await sendDebuggerCommand(targetTabId, method, commandParams);
+    return { ok: true, tabId: targetTabId, method, result };
   }
 
-  throw new Error(`Unsupported action: ${action}`);
 }
 
 async function initializeBridgeBackground() {
