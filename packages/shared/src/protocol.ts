@@ -1,3 +1,5 @@
+export const BRIDGE_CANDIDATE_PORTS = [17374, 17375, 17376, 17377, 17378, 17379, 17380, 17381, 17382, 17383] as const;
+
 export type BrowserKind = "chrome" | "edge" | "firefox";
 
 export type BridgeHello = {

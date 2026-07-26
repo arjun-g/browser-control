@@ -8,6 +8,7 @@ import type {
   BrowserKind,
   CommandAction,
 } from "@browser-control/shared";
+import { BRIDGE_CANDIDATE_PORTS } from "@browser-control/shared";
 
 const MAX_MESSAGE_BYTES = 2_000_000;
 
@@ -29,11 +30,37 @@ export class BrowserBridge {
   private readonly token?: string;
   private readonly clients = new Map<string, BrowserClient>();
   private readonly pending = new Map<string, PendingCommand>();
+  readonly port: number;
 
-  constructor(port: number, token?: string) {
+  private constructor(wss: WebSocketServer, port: number, token?: string) {
+    this.wss = wss;
+    this.port = port;
     this.token = token;
-    this.wss = new WebSocketServer({ port });
     this.wss.on("connection", (socket) => this.handleConnection(socket));
+  }
+
+  /** Bind to the first available port from the candidate list (preferred port tried first). */
+  static async create(preferredPort?: number, token?: string): Promise<BrowserBridge> {
+    const candidates: number[] = preferredPort
+      ? [preferredPort, ...(BRIDGE_CANDIDATE_PORTS as readonly number[]).filter((p) => p !== preferredPort)]
+      : [...BRIDGE_CANDIDATE_PORTS];
+
+    for (const port of candidates) {
+      try {
+        const wss = await new Promise<WebSocketServer>((resolve, reject) => {
+          const server = new WebSocketServer({ port });
+          server.once("listening", () => resolve(server));
+          server.once("error", reject);
+        });
+        return new BrowserBridge(wss, port, token);
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") continue;
+        throw err;
+      }
+    }
+    throw new Error(
+      `No available bridge port. All candidate ports are in use: ${candidates.join(", ")}`,
+    );
   }
 
   async close(): Promise<void> {

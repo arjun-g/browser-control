@@ -33,7 +33,7 @@ function getFreePort(): Promise<number> {
 
 test("registers valid hello client", async () => {
   const port = await getFreePort();
-  const bridge = new BrowserBridge(port);
+  const bridge = await BrowserBridge.create(port);
   bridges.push(bridge);
 
   const ws = new WebSocket(`ws://127.0.0.1:${port}`);
@@ -62,7 +62,7 @@ test("registers valid hello client", async () => {
 
 test("rejects malformed hello payload", async () => {
   const port = await getFreePort();
-  const bridge = new BrowserBridge(port);
+  const bridge = await BrowserBridge.create(port);
   bridges.push(bridge);
 
   const ws = new WebSocket(`ws://127.0.0.1:${port}`);

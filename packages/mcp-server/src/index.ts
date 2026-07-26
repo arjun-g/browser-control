@@ -4,14 +4,15 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { BrowserBridge } from "./bridge.js";
 
-const WS_PORT = Number(process.env.BROWSER_BRIDGE_PORT ?? 17374);
+const PREFERRED_PORT = process.env.BROWSER_BRIDGE_PORT ? Number(process.env.BROWSER_BRIDGE_PORT) : undefined;
 const BRIDGE_TOKEN = process.env.BROWSER_BRIDGE_TOKEN;
 
-const bridge = new BrowserBridge(WS_PORT, BRIDGE_TOKEN);
+const bridge = await BrowserBridge.create(PREFERRED_PORT, BRIDGE_TOKEN);
+process.stderr.write(`Browser bridge listening on ws://127.0.0.1:${bridge.port}\n`);
 
 const server = new McpServer({
   name: "browser-control-mcp",
-  version: "0.1.3",
+  version: "0.1.4",
 });
 
 const browserParam = z.enum(["chrome", "edge", "firefox"]).optional();
