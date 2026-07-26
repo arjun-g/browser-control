@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browser Control Bridge Settings</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --card: #ffffff;
+        --text: #15213b;
+        --muted: #536487;
+        --accent: #0b5fff;
+        --border: #d5dff3;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top right, #e3eeff, var(--bg));
+        color: var(--text);
+        font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 36px auto;
+        padding: 0 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(32, 67, 146, 0.12);
+      }
+      h1 {
+        font-size: 22px;
+        margin: 0 0 8px;
+      }
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+      }
+      label {
+        display: block;
+        margin: 12px 0 6px;
+        font-weight: 600;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        font-size: 14px;
+      }
+      .row {
+        margin-top: 18px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      #status {
+        color: #1f7a3a;
+        min-height: 18px;
+        font-size: 13px;
+      }
+      code {
+        background: #edf2ff;
+        border-radius: 5px;
+        padding: 1px 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Browser Control Bridge Settings</h1>
+        <p>Configure the local MCP bridge connection used by this extension.</p>
+
+        <label for="bridgeUrl">Bridge WebSocket URL</label>
+        <input id="bridgeUrl" type="text" placeholder="ws://127.0.0.1:17374" />
+
+        <label for="bridgeToken">Bridge Token (optional)</label>
+        <input id="bridgeToken" type="password" placeholder="shared secret token" />
+
+        <div class="row">
+          <button id="saveBtn">Save Settings</button>
+          <span id="status"></span>
+        </div>
+
+        <p style="margin-top: 16px">After saving, the extension reconnects automatically.</p>
+      </div>
+    </div>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
