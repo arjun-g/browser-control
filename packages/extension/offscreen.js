@@ -116,7 +116,7 @@ async function connectBridge() {
     safeSend({
       type: "hello",
       browser: detectBrowserKind(),
-      extensionVersion: chrome.runtime.getManifest().version,
+      extensionVersion: chrome.runtime?.getManifest?.()?.version ?? "0.0.0",
       token: currentConfig.bridgeToken || undefined,
     });
   });
