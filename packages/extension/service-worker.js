@@ -644,12 +644,12 @@ async function handleCommand(action, params) {
         tag: el.tagName.toLowerCase(),
         text: el.textContent?.substring(0, 5000) ?? "",
         html: el.innerHTML?.substring(0, 5000) ?? "",
-        value: (el as any).value ?? undefined,
+        value: el.value ?? undefined,
       };
 
       attrs.forEach((attr) => {
         if (typeof attr === "string") {
-          (data as any)[attr] = el.getAttribute(attr);
+          data[attr] = el.getAttribute(attr);
         }
       });
 
@@ -802,7 +802,7 @@ async function handleCommand(action, params) {
       name,
       value,
       expirationDate: expires,
-    } as any);
+    });
 
     return { ok: true, name, value, url };
   }
@@ -826,7 +826,7 @@ async function handleCommand(action, params) {
     return {
       ok: true,
       tabId: targetTabId,
-      metrics: metrics?.metrics?.map((m: any) => ({ name: m.name, value: m.value })) ?? [],
+      metrics: metrics?.metrics?.map((m) => ({ name: m.name, value: m.value })) ?? [],
     };
   }
 
@@ -834,21 +834,21 @@ async function handleCommand(action, params) {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
 
     const result = await executeInTab(targetTabId, () => {
-      const vitals: any = {};
+      const vitals = {};
 
-      if ((window as any).performance?.timing) {
-        const t = (window as any).performance.timing;
+      if (window.performance?.timing) {
+        const t = window.performance.timing;
         vitals.FCP = t.responseEnd - t.navigationStart;
         vitals.LCP = t.loadEventEnd - t.navigationStart;
       }
 
-      if ((window as any).performance?.navigation) {
+      if (window.performance?.navigation) {
         vitals.CLS = 0;
       }
 
-      if ((window as any).PerformanceObserver) {
+      if (window.PerformanceObserver) {
         try {
-          const po = new (window as any).PerformanceObserver((list: any) => {
+          const po = new window.PerformanceObserver((list) => {
             for (const entry of list.getEntries()) {
               if (entry.name === "first-contentful-paint") vitals.FCP = entry.startTime;
               if (entry.entryType === "largest-contentful-paint") vitals.LCP = entry.startTime;
@@ -871,20 +871,20 @@ async function handleCommand(action, params) {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
 
     const result = await executeInTab(targetTabId, () => {
-      const logs: any[] = [];
+      const logs = [];
       const origLog = console.log;
       const origWarn = console.warn;
       const origError = console.error;
 
-      console.log = (...args: any[]) => {
+      console.log = (...args) => {
         logs.push({ level: "log", message: args.map((a) => String(a)).join(" ") });
         origLog(...args);
       };
-      console.warn = (...args: any[]) => {
+      console.warn = (...args) => {
         logs.push({ level: "warn", message: args.map((a) => String(a)).join(" ") });
         origWarn(...args);
       };
-      console.error = (...args: any[]) => {
+      console.error = (...args) => {
         logs.push({ level: "error", message: args.map((a) => String(a)).join(" ") });
         origError(...args);
       };
@@ -918,7 +918,7 @@ async function handleCommand(action, params) {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
 
     const result = await executeInTab(targetTabId, () => {
-      const getText = (el: Element): string => {
+      const getText = (el) => {
         const text = el.textContent?.trim() ?? "";
         return text.substring(0, 500);
       };
@@ -948,11 +948,11 @@ async function handleCommand(action, params) {
       const snapshot = {
         url: window.location.href,
         title: document.title,
-        headings: [] as string[],
-        buttons: [] as string[],
-        links: [] as { text: string; href: string }[],
-        inputs: [] as { type: string; name: string; placeholder?: string }[],
-        forms: [] as { id?: string; action?: string; method?: string }[],
+        headings: [],
+        buttons: [],
+        links: [],
+        inputs: [],
+        forms: [],
       };
 
       document.querySelectorAll("h1, h2, h3").forEach((h) => {
@@ -995,7 +995,7 @@ async function handleCommand(action, params) {
 
   if (action === "list_downloads") {
     const query = params.query || {};
-    const downloads = await chrome.downloads.search(query as any);
+    const downloads = await chrome.downloads.search(query);
 
     return {
       ok: true,
@@ -1020,10 +1020,10 @@ async function handleCommand(action, params) {
 
     try {
       const tabIds = Array.isArray(params.tabIds) ? params.tabIds.filter((id) => Number.isInteger(id)) : [];
-      const group = await (chrome.tabGroups as any).create({ tabIds, title, color });
+      const group = await chrome.tabGroups.create({ tabIds, title, color });
       return { ok: true, groupId: group.id, title, color };
     } catch (err) {
-      return { ok: false, error: (err as Error).message };
+      return { ok: false, error: err.message };
     }
   }
 
@@ -1032,10 +1032,10 @@ async function handleCommand(action, params) {
     if (groupId < 0) throw new Error("Invalid groupId");
 
     try {
-      await (chrome.tabGroups as any).remove(groupId);
+      await chrome.tabGroups.remove(groupId);
       return { ok: true, groupId };
     } catch (err) {
-      return { ok: false, error: (err as Error).message };
+      return { ok: false, error: err.message };
     }
   }
 
