@@ -14,5 +14,8 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "@browser-control/mcp-server": "^0.1.1"
   }
 }

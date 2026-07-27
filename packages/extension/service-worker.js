@@ -497,7 +497,549 @@ async function handleCommand(action, params) {
     return { ok: true, tabId: targetTabId, method, result };
   }
 
-}
+  if (action === "get_current_tab") {
+    return { ok: true, tab };
+  }
+
+  if (action === "close_tab") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    await chrome.tabs.remove(targetTabId);
+    return { ok: true, closedTabId: targetTabId };
+  }
+
+  if (action === "close_tabs") {
+    const tabIds = Array.isArray(params.tabIds) ? params.tabIds.filter((id) => Number.isInteger(id)) : [];
+    if (tabIds.length > 0) {
+      await chrome.tabs.remove(tabIds);
+      return { ok: true, closedCount: tabIds.length, closedTabIds: tabIds };
+    }
+    return { ok: false, error: "No tab IDs provided" };
+  }
+
+  if (action === "reload_tab") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const bypassCache = params.bypassCache === true;
+    await chrome.tabs.reload(targetTabId, { bypassCache });
+    return { ok: true, tabId: targetTabId, bypassCache };
+  }
+
+  if (action === "mouse_move") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const x = Number.isFinite(Number(params.x)) ? Number(params.x) : 0;
+    const y = Number.isFinite(Number(params.y)) ? Number(params.y) : 0;
+
+    await ensureDebuggerAttached(targetTabId);
+    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", { type: "mouseMoved", x, y });
+    return { ok: true, tabId: targetTabId, x, y };
+  }
+
+  if (action === "drag_and_drop") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const selector = typeof params.selector === "string" ? params.selector : "";
+    const toX = Number.isFinite(Number(params.toX)) ? Number(params.toX) : 0;
+    const toY = Number.isFinite(Number(params.toY)) ? Number(params.toY) : 0;
+
+    if (!selector) throw new Error("Missing selector");
+
+    await ensureDebuggerAttached(targetTabId);
+    const startPoint = await cdpFindElementCenter(targetTabId, selector);
+    if (!startPoint?.ok) throw new Error(startPoint?.error ?? "Failed to resolve element position");
+
+    const steps = 5;
+    const stepX = (toX - startPoint.x) / steps;
+    const stepY = (toY - startPoint.y) / steps;
+
+    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: startPoint.x,
+      y: startPoint.y,
+      button: "left",
+    });
+
+    for (let i = 1; i <= steps; i++) {
+      await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        x: startPoint.x + stepX * i,
+        y: startPoint.y + stepY * i,
+        button: "left",
+      });
+      await sleep(50);
+    }
+
+    await sendDebuggerCommand(targetTabId, "Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: toX,
+      y: toY,
+      button: "left",
+    });
+
+    return { ok: true, tabId: targetTabId, selector, fromX: startPoint.x, fromY: startPoint.y, toX, toY };
+  }
+
+  if (action === "focus_element") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const selector = typeof params.selector === "string" ? params.selector : "";
+    if (!selector) throw new Error("Missing selector");
+
+    const result = await executeInTab(targetTabId, (sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return { ok: false, error: "Element not found" };
+      el.focus();
+      return { ok: true };
+    }, [selector]);
+
+    return { ...result, tabId: targetTabId, selector };
+  }
+
+  if (action === "blur_element") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const selector = typeof params.selector === "string" ? params.selector : "";
+    if (!selector) throw new Error("Missing selector");
+
+    const result = await executeInTab(targetTabId, (sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return { ok: false, error: "Element not found" };
+      el.blur();
+      return { ok: true };
+    }, [selector]);
+
+    return { ...result, tabId: targetTabId, selector };
+  }
+
+  if (action === "scroll_element") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const selector = typeof params.selector === "string" ? params.selector : "";
+    const direction = ["up", "down", "left", "right"].includes(params.direction) ? params.direction : "down";
+    const amount = Number.isFinite(Number(params.amount)) ? Number(params.amount) : 300;
+
+    if (!selector) throw new Error("Missing selector");
+
+    const result = await executeInTab(targetTabId, (sel, dir, amt) => {
+      const el = document.querySelector(sel);
+      if (!el) return { ok: false, error: "Element not found" };
+
+      if (dir === "down") el.scrollTop += amt;
+      else if (dir === "up") el.scrollTop -= amt;
+      else if (dir === "right") el.scrollLeft += amt;
+      else if (dir === "left") el.scrollLeft -= amt;
+
+      return { ok: true, scrollLeft: el.scrollLeft, scrollTop: el.scrollTop };
+    }, [selector, direction, amount]);
+
+    return { ...result, tabId: targetTabId, selector, direction, amount };
+  }
+
+  if (action === "dom_extract_element") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const selector = typeof params.selector === "string" ? params.selector : "";
+    const attributes = Array.isArray(params.attributes) ? params.attributes : [];
+
+    if (!selector) throw new Error("Missing selector");
+
+    const result = await executeInTab(targetTabId, (sel, attrs) => {
+      const el = document.querySelector(sel);
+      if (!el) return { ok: false, error: "Element not found" };
+
+      const data = {
+        tag: el.tagName.toLowerCase(),
+        text: el.textContent?.substring(0, 5000) ?? "",
+        html: el.innerHTML?.substring(0, 5000) ?? "",
+        value: (el as any).value ?? undefined,
+      };
+
+      attrs.forEach((attr) => {
+        if (typeof attr === "string") {
+          (data as any)[attr] = el.getAttribute(attr);
+        }
+      });
+
+      return { ok: true, ...data };
+    }, [selector, attributes]);
+
+    return { ...result, tabId: targetTabId, selector };
+  }
+
+  if (action === "add_css") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const css = typeof params.css === "string" ? params.css : "";
+    if (!css) throw new Error("Missing css");
+
+    const result = await executeInTab(targetTabId, (style) => {
+      const styleEl = document.createElement("style");
+      styleEl.textContent = style;
+      styleEl.setAttribute("data-injected", "true");
+      document.head.appendChild(styleEl);
+      return { ok: true, styleId: styleEl.id };
+    }, [css]);
+
+    return { ...result, tabId: targetTabId, cssLength: css.length };
+  }
+
+  if (action === "execute_javascript") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    const code = typeof params.code === "string" ? params.code : "";
+    if (!code) throw new Error("Missing code");
+
+    const result = await cdpEvaluate(targetTabId, code);
+    return { ok: true, tabId: targetTabId, result };
+  }
+
+  if (action === "set_viewport") {
+    const width = Number.isInteger(params.width) ? params.width : 1280;
+    const height = Number.isInteger(params.height) ? params.height : 720;
+    const deviceScaleFactor = Number.isFinite(Number(params.deviceScaleFactor)) ? Number(params.deviceScaleFactor) : 1;
+
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+    await ensureDebuggerAttached(targetTabId);
+
+    await sendDebuggerCommand(targetTabId, "Emulation.setDeviceMetricsOverride", {
+      width,
+      height,
+      deviceScaleFactor,
+      mobile: false,
+      hasTouch: false,
+    });
+
+    return { ok: true, tabId: targetTabId, width, height, deviceScaleFactor };
+  }
+
+  if (action === "emulate_mobile") {
+    const device = typeof params.device === "string" ? params.device : "iPhone 12";
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    await ensureDebuggerAttached(targetTabId);
+
+    const mobileDevices: Record<string, any> = {
+      "iPhone 12": { width: 390, height: 844, deviceScaleFactor: 3, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X)" },
+      "iPhone 14": { width: 390, height: 844, deviceScaleFactor: 3, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)" },
+      "Pixel 6": { width: 412, height: 915, deviceScaleFactor: 2.75, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (Linux; Android 12)" },
+      "iPad": { width: 768, height: 1024, deviceScaleFactor: 2, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (iPad)" },
+    };
+
+    const metrics = mobileDevices[device] || mobileDevices["iPhone 12"];
+
+    await sendDebuggerCommand(targetTabId, "Emulation.setDeviceMetricsOverride", {
+      width: metrics.width,
+      height: metrics.height,
+      deviceScaleFactor: metrics.deviceScaleFactor,
+      mobile: metrics.mobile,
+      hasTouch: metrics.hasTouch,
+    });
+
+    if (metrics.userAgent) {
+      await sendDebuggerCommand(targetTabId, "Network.setUserAgentOverride", { userAgent: metrics.userAgent });
+    }
+
+    return { ok: true, tabId: targetTabId, device, ...metrics };
+  }
+
+  if (action === "resize_window") {
+    const width = Number.isInteger(params.width) ? params.width : 1280;
+    const height = Number.isInteger(params.height) ? params.height : 720;
+    const windowId = Number.isInteger(params.windowId) ? params.windowId : undefined;
+
+    const windows = await chrome.windows.getAll();
+    const targetWindow = windowId ? windows.find((w) => w.id === windowId) : windows[0];
+
+    if (!targetWindow) throw new Error("Window not found");
+
+    await chrome.windows.update(targetWindow.id, { width, height });
+    return { ok: true, windowId: targetWindow.id, width, height };
+  }
+
+  if (action === "toggle_fullscreen") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    await ensureDebuggerAttached(targetTabId);
+    await sendDebuggerCommand(targetTabId, "Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: "F11",
+      code: "F11",
+      windowsVirtualKeyCode: 122,
+    });
+
+    await sleep(100);
+
+    await sendDebuggerCommand(targetTabId, "Input.dispatchKeyEvent", {
+      type: "keyUp",
+      key: "F11",
+      code: "F11",
+      windowsVirtualKeyCode: 122,
+    });
+
+    return { ok: true, tabId: targetTabId };
+  }
+
+  if (action === "get_cookies") {
+    const url = typeof params.url === "string" ? params.url : tab.url;
+
+    const cookies = await chrome.cookies.getAll({ url });
+    return {
+      ok: true,
+      cookies: cookies.map((c) => ({
+        name: c.name,
+        value: c.value,
+        domain: c.domain,
+        path: c.path,
+        expires: c.expirationDate,
+        httpOnly: c.httpOnly,
+        secure: c.secure,
+        sameSite: c.sameSite,
+      })),
+    };
+  }
+
+  if (action === "set_cookie") {
+    const name = typeof params.name === "string" ? params.name : "";
+    const value = typeof params.value === "string" ? params.value : "";
+    const url = typeof params.url === "string" ? params.url : tab.url;
+    const expires = Number.isFinite(Number(params.expires)) ? Number(params.expires) : undefined;
+
+    if (!name || !value) throw new Error("Missing name or value");
+
+    await chrome.cookies.set({
+      url,
+      name,
+      value,
+      expirationDate: expires,
+    } as any);
+
+    return { ok: true, name, value, url };
+  }
+
+  if (action === "delete_cookie") {
+    const name = typeof params.name === "string" ? params.name : "";
+    const url = typeof params.url === "string" ? params.url : tab.url;
+
+    if (!name) throw new Error("Missing name");
+
+    await chrome.cookies.remove({ url, name });
+    return { ok: true, name, url };
+  }
+
+  if (action === "get_performance_metrics") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    await ensureDebuggerAttached(targetTabId);
+    const metrics = await sendDebuggerCommand(targetTabId, "Performance.getMetrics", {});
+
+    return {
+      ok: true,
+      tabId: targetTabId,
+      metrics: metrics?.metrics?.map((m: any) => ({ name: m.name, value: m.value })) ?? [],
+    };
+  }
+
+  if (action === "get_web_vitals") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    const result = await executeInTab(targetTabId, () => {
+      const vitals: any = {};
+
+      if ((window as any).performance?.timing) {
+        const t = (window as any).performance.timing;
+        vitals.FCP = t.responseEnd - t.navigationStart;
+        vitals.LCP = t.loadEventEnd - t.navigationStart;
+      }
+
+      if ((window as any).performance?.navigation) {
+        vitals.CLS = 0;
+      }
+
+      if ((window as any).PerformanceObserver) {
+        try {
+          const po = new (window as any).PerformanceObserver((list: any) => {
+            for (const entry of list.getEntries()) {
+              if (entry.name === "first-contentful-paint") vitals.FCP = entry.startTime;
+              if (entry.entryType === "largest-contentful-paint") vitals.LCP = entry.startTime;
+              if (entry.entryType === "layout-shift") vitals.CLS = (vitals.CLS || 0) + entry.value;
+            }
+          });
+          po.observe({ entryTypes: ["paint", "largest-contentful-paint", "layout-shift"] });
+        } catch {
+          /* observer not available */
+        }
+      }
+
+      return { ok: true, ...vitals };
+    }, []);
+
+    return { ...result, tabId: targetTabId };
+  }
+
+  if (action === "get_console_logs") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    const result = await executeInTab(targetTabId, () => {
+      const logs: any[] = [];
+      const origLog = console.log;
+      const origWarn = console.warn;
+      const origError = console.error;
+
+      console.log = (...args: any[]) => {
+        logs.push({ level: "log", message: args.map((a) => String(a)).join(" ") });
+        origLog(...args);
+      };
+      console.warn = (...args: any[]) => {
+        logs.push({ level: "warn", message: args.map((a) => String(a)).join(" ") });
+        origWarn(...args);
+      };
+      console.error = (...args: any[]) => {
+        logs.push({ level: "error", message: args.map((a) => String(a)).join(" ") });
+        origError(...args);
+      };
+
+      return { ok: true, logs: logs.slice(-100) };
+    }, []);
+
+    return { ...result, tabId: targetTabId };
+  }
+
+  if (action === "dom_snapshot") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    const result = await executeInTab(targetTabId, () => {
+      return {
+        ok: true,
+        snapshot: {
+          html: document.documentElement.outerHTML.substring(0, 50000),
+          title: document.title,
+          url: window.location.href,
+          referrer: document.referrer,
+          characterSet: document.characterSet,
+        },
+      };
+    }, []);
+
+    return { ...result, tabId: targetTabId };
+  }
+
+  if (action === "minimal_snapshot") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    const result = await executeInTab(targetTabId, () => {
+      const getText = (el: Element): string => {
+        const text = el.textContent?.trim() ?? "";
+        return text.substring(0, 500);
+      };
+
+      const elements = Array.from(document.querySelectorAll("h1, h2, h3, p, a, button, input, textarea")).map((el) => ({
+        tag: el.tagName.toLowerCase(),
+        text: getText(el),
+        classes: el.className,
+        id: el.id,
+      }));
+
+      return {
+        ok: true,
+        url: window.location.href,
+        title: document.title,
+        elements: elements.slice(0, 100),
+      };
+    }, []);
+
+    return { ...result, tabId: targetTabId };
+  }
+
+  if (action === "semantic_snapshot") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
+
+    const result = await executeInTab(targetTabId, () => {
+      const snapshot = {
+        url: window.location.href,
+        title: document.title,
+        headings: [] as string[],
+        buttons: [] as string[],
+        links: [] as { text: string; href: string }[],
+        inputs: [] as { type: string; name: string; placeholder?: string }[],
+        forms: [] as { id?: string; action?: string; method?: string }[],
+      };
+
+      document.querySelectorAll("h1, h2, h3").forEach((h) => {
+        const text = h.textContent?.trim() ?? "";
+        if (text) snapshot.headings.push(text.substring(0, 200));
+      });
+
+      document.querySelectorAll("button").forEach((b) => {
+        const text = b.textContent?.trim() ?? "";
+        if (text) snapshot.buttons.push(text.substring(0, 100));
+      });
+
+      document.querySelectorAll("a").forEach((a) => {
+        const text = a.textContent?.trim() ?? "";
+        const href = a.href ?? "";
+        if (text && href) snapshot.links.push({ text: text.substring(0, 100), href });
+      });
+
+      document.querySelectorAll("input").forEach((input) => {
+        snapshot.inputs.push({
+          type: input.type,
+          name: input.name,
+          placeholder: input.placeholder,
+        });
+      });
+
+      document.querySelectorAll("form").forEach((form) => {
+        snapshot.forms.push({
+          id: form.id,
+          action: form.action,
+          method: form.method,
+        });
+      });
+
+      return { ok: true, ...snapshot };
+    }, []);
+
+    return { ...result, tabId: targetTabId };
+  }
+
+  if (action === "list_downloads") {
+    const query = params.query || {};
+    const downloads = await chrome.downloads.search(query as any);
+
+    return {
+      ok: true,
+      downloads: downloads.map((d) => ({
+        id: d.id,
+        filename: d.filename,
+        url: d.url,
+        startTime: d.startTime,
+        endTime: d.endTime,
+        state: d.state,
+        bytesReceived: d.bytesReceived,
+        totalBytes: d.totalBytes,
+      })),
+    };
+  }
+
+  if (action === "create_tab_group") {
+    const title = typeof params.title === "string" ? params.title : "Group";
+    const color = ["grey", "blue", "red", "yellow", "green", "pink", "purple", "cyan"].includes(params.color)
+      ? params.color
+      : "grey";
+
+    try {
+      const tabIds = Array.isArray(params.tabIds) ? params.tabIds.filter((id) => Number.isInteger(id)) : [];
+      const group = await (chrome.tabGroups as any).create({ tabIds, title, color });
+      return { ok: true, groupId: group.id, title, color };
+    } catch (err) {
+      return { ok: false, error: (err as Error).message };
+    }
+  }
+
+  if (action === "delete_tab_group") {
+    const groupId = Number.isInteger(params.groupId) ? params.groupId : -1;
+    if (groupId < 0) throw new Error("Invalid groupId");
+
+    try {
+      await (chrome.tabGroups as any).remove(groupId);
+      return { ok: true, groupId };
+    } catch (err) {
+      return { ok: false, error: (err as Error).message };
+    }
+  }
+
+
 
 async function initializeBridgeBackground() {
   ensureWakeAlarm();
