@@ -12,7 +12,7 @@ process.stderr.write(`Browser bridge listening on ws://127.0.0.1:${bridge.port}\
 
 const server = new McpServer({
   name: "browser-control-mcp",
-  version: "0.2.0",
+  version: "0.2.1",
 });
 
 const browserParam = z.enum(["chrome", "edge", "firefox"]).optional();
@@ -693,12 +693,6 @@ async function main(): Promise<void> {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
-
-main().catch((error) => {
-  console.error("Failed to start MCP server", error);
-  process.exit(1);
-});
-
 
 main().catch((error) => {
   console.error("Failed to start MCP server", error);
