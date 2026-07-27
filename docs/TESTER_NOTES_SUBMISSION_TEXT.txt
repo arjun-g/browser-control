@@ -1,0 +1,132 @@
+# Edge Add-ons Testing Instructions
+
+**Copy this text into the "Provide any info that testers need to understand and use this extension" field:**
+
+---
+
+## Testing Instructions for Microsoft Edge Reviewers
+
+### What This Extension Does
+
+Browser Control Bridge enables AI agents and developers to automate Edge through the Model Context Protocol (MCP). The extension:
+
+1. Installs in Edge and runs in the background
+2. Connects to an MCP server (started by the developer or AI agent)
+3. Receives automation instructions from the MCP server
+4. Executes browser automation commands
+5. Returns results to the MCP server
+
+**All communication is local and encrypted.** No data leaves the user's machine.
+
+### Setup for Testing (5 minutes)
+
+#### 1. Install the Extension
+
+- Extension installs from Microsoft Edge Add-ons store as part of the review process
+
+#### 2. Start the MCP Server
+
+The extension requires an MCP server running. Start it with:
+
+```bash
+npx @browsercontrol/mcp-server
+```
+
+This launches the MCP server. The extension will automatically detect and connect to it.
+
+#### 3. Verify the Connection
+
+1. Open `edge://extensions/`
+2. Find "Browser Control Bridge" and click **Details**
+3. Scroll down and click **Inspect service worker**
+4. Open the **Console** tab
+5. Look for a successful connection confirmation message
+6. If you see it, the extension is working correctly
+
+### What to Test
+
+✅ Extension installs without errors
+✅ Extension appears in the toolbar
+✅ Service worker connects successfully to the MCP server
+✅ No console errors or warnings
+✅ Browser operates normally with extension loaded
+✅ Extension auto-reconnects if MCP server restarts
+
+### Expected Behavior
+
+- **On startup:** Extension loads silently
+- **During operation:** Extension runs in background (no visible UI)
+- **When MCP server sends commands:** Extension executes them automatically
+- **Communication:** Only with the local MCP server
+- **Performance:** No impact on browser speed or functionality
+
+### Supported Browser Automation
+
+The extension supports 42+ automation capabilities:
+- Page navigation and tab management
+- DOM interaction (clicking, typing, scrolling)
+- Screenshot capture and page analysis
+- Cookie and download management
+- Performance monitoring
+- And more...
+
+These are triggered by the MCP server based on AI agent instructions.
+
+### Permissions Explanation
+
+All 14 permissions enable local browser automation:
+
+| Permission | Purpose | Scope |
+|------------|---------|-------|
+| activeTab | Read current tab | Local only |
+| tabs | Manage tabs | Local only |
+| scripting | Execute page scripts | Local only |
+| debugger | Advanced browser control | Local only |
+| storage | Store settings | Local only |
+| cookies | Manage cookies | Local only |
+| downloads | Manage downloads | Local only |
+| tabGroups | Organize tabs | Local only |
+| offscreen | MCP server connection | Local only |
+| sidePanel | Command history UI | Local only |
+| alarms | Background tasks | Local only |
+| <all_urls> | Access webpages | Local only |
+| WebSocket permissions | MCP communication | Local only |
+
+**All communication is local. No external network access.**
+
+### Troubleshooting
+
+**Extension doesn't appear in toolbar:**
+- Go to edge://extensions/ and verify it's enabled
+- Try reloading the extension
+
+**No connection confirmation in console:**
+- Ensure the MCP server is running
+- Wait 2-3 seconds and check again
+- Restart the MCP server if needed
+
+**Console shows connection errors:**
+- Stop and restart the MCP server
+- Extension will auto-reconnect
+
+**Browser performance issues:**
+- Uninstall the extension and restart Edge
+- If performance returns to normal, report the issue
+
+### Clean Uninstall
+
+1. Go to `edge://extensions/`
+2. Find "Browser Control Bridge"
+3. Click **Remove**
+4. Confirm removal
+5. Extension and all data are completely removed
+
+### Support
+
+- **Repository:** https://github.com/arjun-1/browser-control
+- **Website:** https://browser-control.arjun.tools
+- **Email:** support@arjun.tools
+
+**Estimated review time: 10 minutes**
+
+---

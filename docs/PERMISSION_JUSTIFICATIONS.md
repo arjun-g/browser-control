@@ -100,15 +100,23 @@ This document contains the justifications for each permission required by Browse
 
 ---
 
-### 13. ws://127.0.0.1/* & ws://localhost/* (WebSocket)
-**Required for:** Local WebSocket bridge communication.
+### 13. ws://127.0.0.1/* (WebSocket)
+**Required for:** Local WebSocket bridge communication to localhost IP address.
 
 **Justification:**
-"These WebSocket permissions enable secure local communication between the extension and the MCP server running on the user's machine. All communication is confined to localhost (127.0.0.1 and localhost) for maximum security."
+"This WebSocket permission enables secure local communication between the extension and the MCP server running on the user's machine via the 127.0.0.1 loopback address. Communication is confined to localhost for maximum security."
 
 ---
 
-### 14. Single Purpose Description
+### 14. ws://localhost/* (WebSocket)
+**Required for:** Local WebSocket bridge communication to localhost hostname.
+
+**Justification:**
+"This WebSocket permission enables secure local communication between the extension and the MCP server running on the user's machine via the localhost hostname. Communication is confined to localhost for maximum security."
+
+---
+
+### 15. Single Purpose Description
 **Use one of these (copy entire text below):**
 
 **Full Version (recommended, ~420 chars):**
@@ -122,7 +130,7 @@ This document contains the justifications for each permission required by Browse
 
 ---
 
-### 15. Data Usage Compliance
+### 16. Data Usage Compliance
 **Certification Statement:**
 "I certify that my use of user data complies with Google's Developer Program Policies and Chrome Web Store policies. The extension does not collect, store, or transmit user personal data to external servers. All operations are performed locally on the user's machine. Session data and command history are stored only in the browser's local storage and never leave the user's computer."
 
@@ -144,7 +152,8 @@ This document contains the justifications for each permission required by Browse
 | sidePanel | History panel UI | ✅ Yes |
 | alarms | Periodic tasks | ✅ Yes |
 | <all_urls> | Web page control | ✅ Yes |
-| WebSocket | Local bridge | ✅ Yes |
+| ws://127.0.0.1/* | WebSocket localhost IP | ✅ Yes |
+| ws://localhost/* | WebSocket localhost hostname | ✅ Yes |
 
 ## Key Points
 

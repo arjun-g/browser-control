@@ -296,6 +296,27 @@
       line-height: 1.6;
     }
 
+    .config-tab {
+      background: var(--border);
+      color: var(--text);
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    .config-tab:hover {
+      background: #c5c7c9;
+    }
+
+    .config-tab.active-tab {
+      background: var(--primary);
+      color: white;
+    }
+
     /* Highlight */
     .highlight {
       background: #fff3cd;
@@ -355,6 +376,61 @@
     .btn-store:hover {
       border-color: var(--primary);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      position: relative;
+    }
+
+    .btn:disabled:hover {
+      background: white;
+      color: #202124;
+      border: 2px solid #dadce0;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-disabled-tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .btn-disabled-tooltip .tooltip-text {
+      visibility: hidden;
+      width: 120px;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 12px;
+      font-weight: normal;
+      white-space: nowrap;
+    }
+
+    .btn-disabled-tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .btn-disabled-tooltip .tooltip-text::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #333 transparent transparent transparent;
     }
 
     /* Stats */
@@ -639,29 +715,83 @@
         
         <div class="step" data-step="1">
           <strong>Install the Extension</strong>
-          <p>Choose your browser and install the extension from the official store:</p>
-          <div style="display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap;">
-            <a href="https://chromewebstore.google.com/detail/browser-control-bridge/imenfihommiijimkmncgnflfjgjdibbe" class="btn" style="background: white; color: #202124; border: 2px solid #dadce0; text-decoration: none;">
-              <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/chrome.svg" alt="Chrome" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Chrome Store
-            </a>
-            <a href="https://microsoftedge.microsoft.com/addons/detail/browser-control-bridge/imenfihommiijimkmncgnflfjgjdibbe" class="btn" style="background: white; color: #202124; border: 2px solid #dadce0; text-decoration: none;">
-              <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/edge.svg" alt="Edge" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Edge Store
-            </a>
+          <p>Choose your browser and install the extension:</p>
+          <div style="display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap; align-items: flex-start;">
+            <div class="btn-disabled-tooltip">
+              <button class="btn" style="background: white; color: #202124; border: 2px solid #dadce0;" disabled>
+                <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/chrome.svg" alt="Chrome" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Chrome Store
+              </button>
+              <span class="tooltip-text">Under review</span>
+            </div>
+            <div class="btn-disabled-tooltip">
+              <button class="btn" style="background: white; color: #202124; border: 2px solid #dadce0;" disabled>
+                <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/edge.svg" alt="Edge" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Edge Store
+              </button>
+              <span class="tooltip-text">Under review</span>
+            </div>
           </div>
-          <p style="font-size: 13px; color: var(--muted); margin-top: 12px;">Both extensions are identical. Choose based on your preferred browser.</p>
+          <p style="font-size: 12px; color: #ea4335; margin-top: 12px;"><strong>⚠️ Under Review:</strong> Extensions are currently under review on Chrome Web Store and Microsoft Edge Add-ons. Use the method below to load from GitHub.</p>
         </div>
 
         <div class="step" data-step="2">
+          <strong>Load Extension from GitHub (Temporary)</strong>
+          <p>While the extension is under review, load it directly from source:</p>
+          
+          <div style="margin: 16px 0; font-size: 14px; color: var(--muted); line-height: 1.8;">
+            <div style="margin-bottom: 16px;">
+              <strong style="color: var(--text);">1. Clone or download the repository:</strong>
+              <div class="code-block">git clone https://github.com/arjun-g/browser-control.git</div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <strong style="color: var(--text);">2. Open your browser's extension page:</strong>
+              <div style="margin-left: 20px; margin-top: 8px;">
+                <div><strong>Chrome:</strong> chrome://extensions/</div>
+                <div><strong>Edge:</strong> edge://extensions/</div>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <strong style="color: var(--text);">3. Enable Developer mode</strong>
+              <p style="margin: 4px 0; color: var(--muted);">(toggle in top-right corner)</p>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+              <strong style="color: var(--text);">4. Click "Load unpacked" button</strong>
+            </div>
+            
+            <div>
+              <strong style="color: var(--text);">5. Navigate to browser-control/packages/extension</strong>
+              <p style="margin: 4px 0; color: var(--muted);">and select the folder</p>
+            </div>
+          </div>
+          
+          <p style="font-size: 12px; color: var(--muted); margin-top: 16px;">The extension will load with a temporary ID. Once it's available on official stores, you can install from there instead.</p>
+        </div>
+
+        <div class="step" data-step="3">
           <strong>Start the MCP Server</strong>
           <p>Run the local MCP server to establish the connection between your AI client and browser:</p>
           <div class="code-block">npm install -g @browser-control/mcp-server
 mcp-server</div>
         </div>
 
-        <div class="step" data-step="3">
+        <div class="step" data-step="4">
           <strong>Configure Your AI Client</strong>
-          <p>Add the MCP server to your AI client configuration (Claude, Copilot, Gemini, etc.):</p>
-          <div class="code-block">{
+          <p>Add the MCP server to your AI client configuration:</p>
+          
+          <div style="margin-bottom: 24px; display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="config-tab active-tab" data-config="claude" onclick="switchConfig('claude', this)">Claude Code</button>
+            <button class="config-tab" data-config="copilot" onclick="switchConfig('copilot', this)">GitHub Copilot</button>
+            <button class="config-tab" data-config="cursor" onclick="switchConfig('cursor', this)">Cursor</button>
+            <button class="config-tab" data-config="generic" onclick="switchConfig('generic', this)">Other</button>
+          </div>
+
+          <div id="claude" class="config-content">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;"><strong>Claude Code (v1.101+)</strong> - Method 1: CLI Command (Recommended)</p>
+            <div class="code-block">claude mcp add browser-control -- npx -y @browser-control/mcp-server</div>
+            <p style="font-size: 12px; color: var(--muted); margin: 12px 0;">Or Method 2: Manual config file at <code>~/.config/Claude/claude_desktop_config.json</code></p>
+            <div class="code-block">{
   "mcpServers": {
     "browser-control": {
       "command": "npx",
@@ -669,6 +799,60 @@ mcp-server</div>
     }
   }
 }</div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 12px;">After configuration, restart Claude Code to load the server.</p>
+          </div>
+
+          <div id="copilot" class="config-content" style="display: none;">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;"><strong>GitHub Copilot in VS Code (v1.101+)</strong> - Add to VS Code settings</p>
+            <p style="font-size: 12px; color: var(--muted); margin-bottom: 8px;">Open VS Code Settings (File → Preferences → Settings) and search for "MCP Servers" or edit <code>.vscode/settings.json</code>:</p>
+            <div class="code-block">{
+  "mcpServers": {
+    "browser-control": {
+      "command": "npx",
+      "args": ["-y", "@browser-control/mcp-server"]
+    }
+  }
+}</div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 12px;"><strong>Important:</strong> Toggle <strong>Agent Mode</strong> next to the Copilot Chat input to activate configured MCP servers. Reload VS Code after saving settings.</p>
+          </div>
+
+          <div id="cursor" class="config-content" style="display: none;">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;"><strong>Cursor</strong> - Use Graphical Configuration</p>
+            <p style="font-size: 12px; color: var(--muted); margin-bottom: 12px;">Cursor provides a GUI for MCP configuration instead of manual JSON editing:</p>
+            <div class="code-block" style="background: #f8f9fa; color: #202124; border: 1px solid #dadce0;">Settings ──> Features ──> MCP ──> + Add New MCP Server</div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 12px;">Click "Add New MCP Server" and fill in:</p>
+            <ul style="font-size: 12px; color: var(--muted); margin: 12px 0; margin-left: 20px;">
+              <li><strong>Name:</strong> browser-control</li>
+              <li><strong>Command:</strong> npx</li>
+              <li><strong>Args:</strong> -y @browser-control/mcp-server</li>
+            </ul>
+            <p style="font-size: 12px; color: var(--muted);">Restart Cursor to activate.</p>
+          </div>
+
+          <div id="generic" class="config-content" style="display: none;">
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 8px;"><strong>Continue.dev IDE Extension</strong> - File: <code>~/.continue/config.json</code></p>
+            <div class="code-block">{
+  "mcpServers": {
+    "browser-control": {
+      "command": "npx",
+      "args": ["-y", "@browser-control/mcp-server"]
+    }
+  }
+}</div>
+            <p style="font-size: 12px; color: var(--muted); margin-top: 12px;"><strong>For Other MCP Clients:</strong> Any MCP-compatible application can use Browser Control Bridge. Visit <a href="https://modelcontextprotocol.io" target="_blank" style="color: var(--primary);">modelcontextprotocol.io</a> for the full MCP specification and list of compatible clients.</p>
+          </div>
+
+          <script>
+            function switchConfig(configName, button) {
+              // Hide all configs
+              document.querySelectorAll('.config-content').forEach(el => el.style.display = 'none');
+              // Show selected config
+              document.getElementById(configName).style.display = 'block';
+              // Update button styles
+              document.querySelectorAll('.config-tab').forEach(btn => btn.classList.remove('active-tab'));
+              button.classList.add('active-tab');
+            }
+          </script>
         </div>
 
         <div class="step" data-step="4">
