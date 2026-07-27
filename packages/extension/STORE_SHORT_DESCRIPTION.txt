@@ -1,0 +1,1 @@
+Control Chrome/Edge with AI agents via MCP. 40+ browser automation tools, local & secure, designed for seamless AI integration.

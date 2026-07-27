@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser Control</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 480px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f5f5f5;
+      color: #202124;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4285f4 0%, #1f73db 100%);
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .icon-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #dadce0;
+      background: white;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5f6368;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: #1f73db;
+      border-bottom-color: #1f73db;
+    }
+
+    .tab:hover {
+      background: #f8f9fa;
+    }
+
+    .content {
+      padding: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .session-item {
+      background: white;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .session-item:hover {
+      background: #f8f9fa;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .session-time {
+      font-size: 12px;
+      color: #5f6368;
+    }
+
+    .session-count {
+      background: #e8f0fe;
+      color: #1f73db;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: #5f6368;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+      padding: 16px;
+      border-top: 1px solid #dadce0;
+      background: white;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #1f73db;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1765cc;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+    }
+
+    .btn-secondary:hover {
+      background: #f1f3f4;
+    }
+
+    .btn-danger {
+      background: #f8f9fa;
+      color: #d33b27;
+      border: 1px solid #dadce0;
+    }
+
+    .btn-danger:hover {
+      background: #fde7e6;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Browser Control</h1>
+    <div class="header-actions">
+      <button class="icon-button" id="sidebarToggle" title="Toggle Sidebar">▶</button>
+      <button class="icon-button" id="refreshBtn" title="Refresh">🔄</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="history">History</button>
+    <button class="tab" data-tab="settings">Settings</button>
+  </div>
+
+  <div class="content" id="historyTab">
+    <div class="empty-state">
+      <div class="empty-state-icon">📋</div>
+      <p>No command history yet</p>
+    </div>
+  </div>
+
+  <div class="content" id="settingsTab" style="display: none">
+    <div style="background: white; padding: 12px; border-radius: 8px">
+      <label style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 500">
+        Bridge URL
+        <input id="bridgeUrl" type="text" value="ws://127.0.0.1:17374" style="width: 100%; margin-top: 4px; padding: 8px; border: 1px solid #dadce0; border-radius: 4px; font-size: 12px" />
+      </label>
+      <label style="display: block; margin-bottom: 12px; font-size: 12px; font-weight: 500">
+        Bridge Token (optional)
+        <input id="bridgeToken" type="password" style="width: 100%; margin-top: 4px; padding: 8px; border: 1px solid #dadce0; border-radius: 4px; font-size: 12px" />
+      </label>
+    </div>
+  </div>
+
+  <div class="button-group">
+    <button class="btn-primary" id="openSidebar">Open Sidebar</button>
+    <button class="btn-danger" id="clearHistory">Clear History</button>
+  </div>
+
+  <script src="db.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

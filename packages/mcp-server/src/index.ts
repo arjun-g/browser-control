@@ -18,6 +18,27 @@ const server = new McpServer({
 const browserParam = z.enum(["chrome", "edge", "firefox"]).optional();
 const tabIdParam = z.number().int().positive().optional();
 
+// Utility to convert data URL to MCP image format
+function extractImageFromDataUrl(dataUrl: string): { mimeType: string; data: string } | null {
+  if (!dataUrl || !dataUrl.startsWith("data:image/")) {
+    return null;
+  }
+  
+  // Parse data URL: data:image/png;base64,<data>
+  const match = dataUrl.match(/^data:image\/([a-z]+);base64,(.+)$/);
+  if (!match) {
+    return null;
+  }
+  
+  const [, format, base64Data] = match;
+  const mimeType = `image/${format}`; // e.g., "image/png", "image/jpeg"
+  
+  return {
+    mimeType,
+    data: base64Data,
+  };
+}
+
 server.registerTool("list_browser_clients", {
   description: "List connected browser extension clients.",
 }, async () => {
@@ -154,12 +175,13 @@ server.registerTool("read_dom", {
   description: "Read the current page DOM outerHTML.",
   inputSchema: {
     maxChars: z.number().int().positive().max(2_000_000).optional(),
+    tabId: tabIdParam,
     browser: browserParam,
   },
-}, async ({ maxChars, browser }) => {
+}, async ({ maxChars, tabId, browser }) => {
   const result = await bridge.sendCommand({
     action: "read_dom",
-    params: { maxChars: maxChars ?? 200000 },
+    params: { maxChars: maxChars ?? 200000, tabId },
     preferredBrowser: browser,
     timeoutMs: 30000,
   });
@@ -176,12 +198,32 @@ server.registerTool("screenshot", {
     browser: browserParam,
   },
 }, async ({ fullPage, format, quality, tabId, browser }) => {
-  const result = await bridge.sendCommand({
+  const result = (await bridge.sendCommand({
     action: "screenshot",
     params: { fullPage: fullPage ?? false, format: format ?? "png", quality: quality ?? 90, tabId },
     preferredBrowser: browser,
     timeoutMs: 60000,
-  });
+  })) as { ok: boolean; dataUrl: string; tabId: number; fullPage: boolean };
+  
+  // Extract image from dataUrl and return in MCP image format
+  const image = extractImageFromDataUrl(result.dataUrl);
+  if (image) {
+    return {
+      content: [
+        {
+          type: "image",
+          data: image.data,
+          mimeType: image.mimeType,
+        },
+        {
+          type: "text",
+          text: JSON.stringify({ ok: true, tabId: result.tabId, fullPage: result.fullPage }, null, 2),
+        },
+      ] as any,
+    };
+  }
+  
+  // Fallback if image extraction fails
   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
 });
 

@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Browser Control Bridge - Control Chrome/Edge sessions via AI agents using Model Context Protocol" />
+  <meta name="keywords" content="MCP, Model Context Protocol, browser automation, AI agents, Chrome, Edge" />
+  <meta property="og:title" content="Browser Control Bridge" />
+  <meta property="og:description" content="Control Chrome/Edge sessions via AI agents using MCP" />
+  <meta property="og:image" content="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/browser-control.svg" />
+  <link rel="icon" type="image/svg+xml" href="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/browser-control.svg" />
+  <link rel="shortcut icon" href="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/browser-control.svg" />
+  <link rel="apple-touch-icon" href="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/browser-control.svg" />
+  <title>Browser Control Bridge - AI-Powered Browser Automation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #4285f4;
+      --primary-dark: #1f73db;
+      --accent: #34a853;
+      --warning: #fbbc04;
+      --danger: #ea4335;
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --text: #202124;
+      --muted: #5f6368;
+      --border: #dadce0;
+    }
+
+    html, body {
+      width: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Navigation */
+    nav {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .nav-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-brand {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--primary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-brand img {
+      width: 28px;
+      height: 28px;
+      object-fit: contain;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+
+    .header p {
+      font-size: 20px;
+      opacity: 0.95;
+      max-width: 700px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Section */
+    .section {
+      padding: 80px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section:last-child {
+      border-bottom: none;
+    }
+
+    .section h2 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 48px;
+      text-align: center;
+      color: var(--primary-dark);
+    }
+
+    .section h3 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 32px;
+      color: var(--primary-dark);
+    }
+
+    /* Features Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      transition: all 0.3s ease;
+    }
+
+    .feature-card:hover {
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+      transform: translateY(-6px);
+      border-color: var(--primary);
+    }
+
+    .feature-icon {
+      font-size: 40px;
+      margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .feature-card p {
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    /* Tools Grid */
+    .tools-section {
+      margin-bottom: 48px;
+    }
+
+    .tools-section h4 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .tool-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 14px;
+    }
+
+    .tool-item code {
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    /* Getting Started */
+    .getting-started {
+      background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
+      border: 2px solid var(--primary);
+      border-radius: 12px;
+      padding: 48px;
+      margin: 48px 0;
+    }
+
+    .getting-started h3 {
+      font-size: 28px;
+      color: var(--primary-dark);
+      margin-bottom: 32px;
+    }
+
+    .step {
+      margin-bottom: 32px;
+      padding-left: 40px;
+      position: relative;
+    }
+
+    .step::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .step strong {
+      display: block;
+      font-size: 18px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .step p {
+      margin: 8px 0;
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin: 16px 0;
+      line-height: 1.6;
+    }
+
+    /* Highlight */
+    .highlight {
+      background: #fff3cd;
+      border-left: 4px solid var(--warning);
+      padding: 16px;
+      border-radius: 4px;
+      margin: 24px 0;
+      font-size: 14px;
+      color: #664d03;
+      line-height: 1.6;
+    }
+
+    /* Button */
+    .btn {
+      display: inline-flex;
+      background: var(--primary);
+      color: white;
+      padding: 14px 28px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-store {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      color: var(--text);
+      border: 2px solid var(--border);
+    }
+
+    .btn-store:hover {
+      border-color: var(--primary);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 32px;
+      text-align: center;
+      margin: 48px 0;
+    }
+
+    .stat {
+      padding: 24px;
+    }
+
+    .stat-number {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    /* Footer */
+    .footer {
+      background: var(--text);
+      color: white;
+      padding: 64px 20px;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .footer h3 {
+      font-size: 24px;
+      margin-bottom: 12px;
+      color: white;
+    }
+
+    .footer p {
+      margin: 12px 0;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .footer-copyright {
+      margin-top: 32px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      font-size: 13px;
+      opacity: 0.7;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 32px;
+      }
+
+      .header p {
+        font-size: 16px;
+      }
+
+      .section h2 {
+        font-size: 28px;
+      }
+
+      .nav-links {
+        gap: 16px;
+        font-size: 12px;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .getting-started {
+        padding: 32px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav>
+    <div class="container">
+      <div class="nav-content">
+        <a href="#" class="nav-brand"><img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/browser-control.svg" alt="Browser Control Logo"> Browser Control</a>
+        <ul class="nav-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#tools">Tools</a></li>
+          <li><a href="#getting-started">Get Started</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="https://github.com/arjun-g/browser-control" target="_blank" rel="noopener"><img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/github.svg" style="height: 16px;" /> GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="container">
+      <h1>Control Your Browser with AI</h1>
+      <p>Give AI agents full control of Chrome and Edge with Model Context Protocol. Automate everything from navigation to DOM manipulation.</p>
+      <div class="cta-buttons">
+        <a href="#getting-started" class="btn btn-secondary">🚀 Get Started</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-number">40+</div>
+        <div class="stat-label">Browser Control Tools</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">1s</div>
+        <div class="stat-label">Setup Time</div>
+      </div>
+      <div class="stat">
+        <div class="stat-number">∞</div>
+        <div class="stat-label">Possibilities</div>
+      </div>
+    </div>
+
+
+    <!-- Core Features Section -->
+    <div class="section" id="features">
+      <h2>Powerful Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>Seamless Integration</h3>
+          <p>Connect any MCP-enabled AI tool (Claude, Copilot, Gemini, etc.) to your existing browser session with our lightweight bridge extension.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>40+ Actions</h3>
+          <p>From basic navigation to advanced Chrome DevTools Protocol operations: click, type, screenshot, DOM inspection, performance metrics, and much more.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3>Full DOM Control</h3>
+          <p>Read DOM snapshots, extract elements, inject CSS, execute JavaScript, and interact with any web element programmatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Performance Insights</h3>
+          <p>Monitor Core Web Vitals, performance metrics, console logs, and network activity in real-time from your AI agent.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>Tab Management</h3>
+          <p>Open, close, organize tabs into groups, navigate history, reload, and manage multiple browser windows automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎬</div>
+          <h3>Chrome DevTools Protocol</h3>
+          <p>Direct access to CDP for advanced debugging, profiling, and automation capabilities beyond standard browser APIs.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Browser Control Tools Section -->
+    <div class="section" id="tools">
+      <h2>40+ MCP Tools</h2>
+      <p style="text-align: center; color: var(--muted); margin-bottom: 48px; font-size: 16px;">Complete browser automation via Model Context Protocol</p>
+      
+      <div class="tools-section">
+        <h4>Navigation & Tabs</h4>
+        <div class="tools-grid">
+          <div class="tool-item"><code>navigate</code> - Open URL</div>
+          <div class="tool-item"><code>back</code> - Go back</div>
+          <div class="tool-item"><code>forward</code> - Go forward</div>
+          <div class="tool-item"><code>new_tab</code> - Open new tab</div>
+          <div class="tool-item"><code>close_tab</code> - Close tab</div>
+          <div class="tool-item"><code>close_tabs</code> - Close multiple tabs</div>
+          <div class="tool-item"><code>reload_tab</code> - Reload tab</div>
+          <div class="tool-item"><code>list_tabs</code> - Get all tabs</div>
+          <div class="tool-item"><code>get_current_tab</code> - Current tab info</div>
+          <div class="tool-item"><code>create_tab_group</code> - Group tabs</div>
+          <div class="tool-item"><code>delete_tab_group</code> - Ungroup tabs</div>
+        </div>
+      </div>
+
+      <div class="tools-section">
+        <h4>Interaction</h4>
+        <div class="tools-grid">
+          <div class="tool-item"><code>click</code> - Click element</div>
+          <div class="tool-item"><code>type</code> - Type text</div>
+          <div class="tool-item"><code>keypress</code> - Press key</div>
+          <div class="tool-item"><code>scroll</code> - Scroll page</div>
+          <div class="tool-item"><code>mouse_move</code> - Move mouse</div>
+          <div class="tool-item"><code>drag_and_drop</code> - Drag elements</div>
+          <div class="tool-item"><code>focus_element</code> - Focus element</div>
+          <div class="tool-item"><code>blur_element</code> - Blur element</div>
+          <div class="tool-item"><code>scroll_element</code> - Scroll element</div>
+        </div>
+      </div>
+
+      <div class="tools-section">
+        <h4>DOM & Content</h4>
+        <div class="tools-grid">
+          <div class="tool-item"><code>read_dom</code> - Read DOM content</div>
+          <div class="tool-item"><code>dom_snapshot</code> - Full DOM snapshot</div>
+          <div class="tool-item"><code>minimal_snapshot</code> - Minimal snapshot</div>
+          <div class="tool-item"><code>semantic_snapshot</code> - Semantic snapshot</div>
+          <div class="tool-item"><code>dom_extract_element</code> - Extract element</div>
+          <div class="tool-item"><code>screenshot</code> - Take screenshot</div>
+          <div class="tool-item"><code>wait_for_selector</code> - Wait for element</div>
+          <div class="tool-item"><code>wait_for_navigation</code> - Wait for navigation</div>
+        </div>
+      </div>
+
+      <div class="tools-section">
+        <h4>JavaScript & Styling</h4>
+        <div class="tools-grid">
+          <div class="tool-item"><code>execute_javascript</code> - Run JS code</div>
+          <div class="tool-item"><code>add_css</code> - Inject CSS</div>
+        </div>
+      </div>
+
+      <div class="tools-section">
+        <h4>Browser State</h4>
+        <div class="tools-grid">
+          <div class="tool-item"><code>get_cookies</code> - Get cookies</div>
+          <div class="tool-item"><code>set_cookie</code> - Set cookie</div>
+          <div class="tool-item"><code>delete_cookie</code> - Delete cookie</div>
+          <div class="tool-item"><code>set_viewport</code> - Set viewport</div>
+          <div class="tool-item"><code>resize_window</code> - Resize window</div>
+          <div class="tool-item"><code>emulate_mobile</code> - Mobile emulation</div>
+          <div class="tool-item"><code>toggle_fullscreen</code> - Toggle fullscreen</div>
+        </div>
+      </div>
+
+      <div class="tools-section">
+        <h4>Analytics & Debugging</h4>
+        <div class="tools-grid">
+          <div class="tool-item"><code>get_performance_metrics</code> - Performance data</div>
+          <div class="tool-item"><code>get_web_vitals</code> - Core Web Vitals</div>
+          <div class="tool-item"><code>get_console_logs</code> - Console output</div>
+          <div class="tool-item"><code>cdp_command</code> - Raw CDP command</div>
+          <div class="tool-item"><code>list_downloads</code> - List downloads</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Getting Started Section -->
+    <div class="section" id="getting-started">
+      <h2>Get Started in Minutes</h2>
+      <div class="getting-started">
+        <h3>Setup Instructions</h3>
+        
+        <div class="step" data-step="1">
+          <strong>Install the Extension</strong>
+          <p>Choose your browser and install the extension from the official store:</p>
+          <div style="display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap;">
+            <a href="https://chromewebstore.google.com/detail/browser-control-bridge/imenfihommiijimkmncgnflfjgjdibbe" class="btn" style="background: white; color: #202124; border: 2px solid #dadce0; text-decoration: none;">
+              <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/chrome.svg" alt="Chrome" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Chrome Store
+            </a>
+            <a href="https://microsoftedge.microsoft.com/addons/detail/browser-control-bridge/imenfihommiijimkmncgnflfjgjdibbe" class="btn" style="background: white; color: #202124; border: 2px solid #dadce0; text-decoration: none;">
+              <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/edge.svg" alt="Edge" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Edge Store
+            </a>
+          </div>
+          <p style="font-size: 13px; color: var(--muted); margin-top: 12px;">Both extensions are identical. Choose based on your preferred browser.</p>
+        </div>
+
+        <div class="step" data-step="2">
+          <strong>Start the MCP Server</strong>
+          <p>Run the local MCP server to establish the connection between your AI client and browser:</p>
+          <div class="code-block">npm install -g @browser-control/mcp-server
+mcp-server</div>
+        </div>
+
+        <div class="step" data-step="3">
+          <strong>Configure Your AI Client</strong>
+          <p>Add the MCP server to your AI client configuration (Claude, Copilot, Gemini, etc.):</p>
+          <div class="code-block">{
+  "mcpServers": {
+    "browser-control": {
+      "command": "npx",
+      "args": ["-y", "@browser-control/mcp-server"]
+    }
+  }
+}</div>
+        </div>
+
+        <div class="step" data-step="4">
+          <strong>Start Using</strong>
+          <p>Your AI agent now has full control of your browser! Ask it to navigate, interact, and analyze web content.</p>
+        </div>
+
+        <div class="highlight">
+          <strong>💡 Pro Tip:</strong> Open the extension's Command History sidebar to see all actions performed and debug integration. Visit the Options page to configure the WebSocket bridge URL and authentication token.
+        </div>
+      </div>
+    </div>
+
+    <!-- Architecture Section -->
+    <div class="section">
+      <h2>How It Works</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">📡</div>
+          <h3>MCP Server</h3>
+          <p>Node.js server running locally that exposes 40+ tools via the Model Context Protocol using stdio + WebSocket transports.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔌</div>
+          <h3>Browser Extension</h3>
+          <p>Manifest V3 extension with service worker, offscreen bridge document, and interactive command history sidebar UI.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌉</div>
+          <h3>WebSocket Bridge</h3>
+          <p>Secure local WebSocket connection between MCP server and extension with optional token-based authentication.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Why Section -->
+    <div class="section">
+      <h2>Why Browser Control Bridge?</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🏗️</div>
+          <h3>Open Architecture</h3>
+          <p>Generic, workflow-agnostic browser control primitives that work with any AI tool supporting MCP.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Secure Local Bridge</h3>
+          <p>Everything stays on your machine. WebSocket bridge keeps data local with optional token-based authentication.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>Chrome & Edge</h3>
+          <p>Works with both Chrome and Microsoft Edge. Fully compatible with Manifest V3.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🚀</div>
+          <h3>Developer Friendly</h3>
+          <p>TypeScript codebase with comprehensive protocol definitions. Easy to extend and customize.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📦</div>
+          <h3>NPM Published</h3>
+          <p>Install via <code>npm install -g @browser-control/mcp-server</code> for instant access.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📖</div>
+          <h3>Well Documented</h3>
+          <p>Comprehensive README, setup guides, and examples in the GitHub repository.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Use Cases -->
+    <div class="section">
+      <h2>Use Cases</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🤖</div>
+          <h3>AI Web Automation</h3>
+          <p>Let AI agents handle repetitive web tasks: data extraction, form filling, screenshots, and testing.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧪</div>
+          <h3>Automated Testing</h3>
+          <p>Write tests in your preferred language and use AI for intelligent test automation and debugging.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Web Scraping</h3>
+          <p>Let AI understand and extract data from complex dynamic websites with natural language instructions.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3>Performance Analysis</h3>
+          <p>AI agents can analyze Core Web Vitals, performance metrics, and suggest optimizations automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🐛</div>
+          <h3>Bug Investigation</h3>
+          <p>Use AI to systematically reproduce bugs, collect evidence, and generate detailed bug reports.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h3>Competitive Analysis</h3>
+          <p>Monitor competitor websites automatically and extract insights using AI analysis.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" id="contact">
+    <div class="footer-content">
+      <h3>Browser Control Bridge</h3>
+      <p>Control Chrome/Edge via AI Agents using Model Context Protocol</p>
+      
+      <div class="footer-links">
+        <a href="https://github.com/arjun-g/browser-control">GitHub</a>
+        <a href="https://github.com/arjun-g/browser-control/issues">Report Issues</a>
+        <a href="mailto:support@arjun.tools">Email Support</a>
+        <a href="https://browser-control.arjun.tools/privacy-policy">Privacy Policy</a>
+      </div>
+
+      <p style="margin-top: 24px; font-weight: 500;">📧 Questions? Email us at <a href="mailto:support@arjun.tools">support@arjun.tools</a></p>
+
+      <div class="footer-copyright">
+        <p>Version 0.1.0 • Designed to empower AI agents with seamless browser automation</p>
+        <p>© 2026 Browser Control Bridge. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

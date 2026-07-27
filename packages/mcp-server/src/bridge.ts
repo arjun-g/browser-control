@@ -12,6 +12,9 @@ import { BRIDGE_CANDIDATE_PORTS } from "@browser-control/shared";
 
 const MAX_MESSAGE_BYTES = 2_000_000;
 
+// Agent name injected into every command for tracking in the sidebar
+const AGENT_NAME = process.env.BROWSER_AGENT_NAME || process.env.npm_lifecycle_script || "mcp-agent";
+
 type BrowserClient = {
   id: string;
   browser: BrowserKind;
@@ -131,6 +134,7 @@ export class BrowserBridge {
       id,
       action: args.action,
       params: args.params,
+      agent: AGENT_NAME,
     };
 
     const payload = JSON.stringify(cmd);

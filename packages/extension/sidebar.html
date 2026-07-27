@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browser Control - Command History</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #fff;
+      color: #202124;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4285f4 0%, #1f73db 100%);
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      flex-shrink: 0;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+
+    .icon-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #dadce0;
+      background: white;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: #5f6368;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: #1f73db;
+      border-bottom-color: #1f73db;
+    }
+
+    .tab:hover {
+      background: #f8f9fa;
+    }
+
+    .session-selector {
+      padding: 12px;
+      border-bottom: 1px solid #dadce0;
+      background: white;
+      display: none;
+    }
+
+    .session-selector.active {
+      display: block;
+    }
+
+    .session-selector label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: #5f6368;
+      margin-bottom: 6px;
+    }
+
+    .session-selector select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 12px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .session-metadata {
+      padding: 12px;
+      background: #f8f9fa;
+      border-bottom: 1px solid #dadce0;
+      font-size: 12px;
+      color: #5f6368;
+      display: none;
+    }
+
+    .session-metadata.active {
+      display: block;
+    }
+
+    .metadata-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    .metadata-label {
+      font-weight: 500;
+    }
+
+    .metadata-value {
+      color: #202124;
+    }
+
+    .session-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .session-card {
+      background: white;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .session-card:hover {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: #f8f9fa;
+    }
+
+    .session-card.active {
+      border-color: #1f73db;
+      background: #e8f0fe;
+      box-shadow: 0 2px 8px rgba(31, 115, 219, 0.15);
+    }
+
+    .session-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .session-time {
+      font-size: 12px;
+      font-weight: 500;
+      color: #1f73db;
+    }
+
+    .session-agent {
+      font-size: 11px;
+      color: #5f6368;
+      margin: 4px 0 6px;
+    }
+
+    .session-agent strong {
+      color: #202124;
+    }
+
+    .session-status {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: #e6f4ea;
+      color: #188038;
+    }
+
+    .session-status.completed {
+      background: #f3f3f3;
+      color: #5f6368;
+    }
+
+    .session-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 11px;
+      color: #5f6368;
+    }
+
+    .session-stat {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .session-stat-label {
+      font-weight: 500;
+    }
+
+    .session-stat-value {
+      color: #202124;
+      font-weight: 600;
+    }
+
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: white;
+      border-bottom: 1px solid #dadce0;
+    }
+
+    .overview-header h2 {
+      font-size: 13px;
+      font-weight: 500;
+      color: #202124;
+      margin: 0;
+    }
+
+    .session-count {
+      font-size: 11px;
+      color: #5f6368;
+      background: #f8f9fa;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .commands-container {
+      width: 100%;
+    }
+
+    .command-item {
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 8px;
+      border-left: 4px solid #1f73db;
+      transition: all 0.2s;
+    }
+
+    .command-item:hover {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      background: white;
+    }
+
+    .command-item.error {
+      border-left-color: #d33b27;
+    }
+
+    .command-item.loading {
+      border-left-color: #fbbc04;
+    }
+
+    .command-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .command-action {
+      font-weight: 600;
+      font-size: 13px;
+      color: #1f73db;
+      word-break: break-word;
+      flex: 1;
+    }
+
+    .command-time {
+      font-size: 11px;
+      color: #5f6368;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    .command-status {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-top: 4px;
+    }
+
+    .status-success {
+      background: #e6f4ea;
+      color: #188038;
+    }
+
+    .status-error {
+      background: #fce8e6;
+      color: #d33b27;
+    }
+
+    .status-loading {
+      background: #fef7e0;
+      color: #f57c00;
+    }
+
+    .command-params {
+      font-size: 11px;
+      color: #5f6368;
+      margin: 6px 0 0;
+      background: #f8f9fa;
+      padding: 6px 8px;
+      border-radius: 4px;
+      max-height: 54px;
+      overflow: hidden;
+      word-break: break-all;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .command-result {
+      font-size: 12px;
+      color: #202124;
+      margin: 6px 0 0;
+      background: #f8f9fa;
+      padding: 6px 8px;
+      border-radius: 4px;
+      max-height: 130px;
+      overflow: auto;
+      word-break: break-all;
+    }
+
+    .command-result code {
+      font-family: monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+    }
+
+    .command-result img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+
+    .command-agent {
+      font-size: 11px;
+      color: #5f6368;
+      margin-top: 3px;
+    }
+
+    .command-agent strong {
+      color: #1f73db;
+      font-weight: 600;
+    }
+
+    .result-screenshot {
+      margin: 8px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .result-screenshot .thumbnail {
+      max-width: 100%;
+      max-height: 80px;
+      border-radius: 4px;
+      cursor: zoom-in;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      border: 1px solid #dadce0;
+      display: block;
+    }
+
+    .result-screenshot .thumbnail:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      border-color: #1f73db;
+    }
+
+    .result-screenshot .thumbnail-hint {
+      font-size: 10px;
+      color: #5f6368;
+    }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: #5f6368;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .filters {
+      padding: 12px;
+      border-bottom: 1px solid #dadce0;
+      background: white;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 6px 12px;
+      border: 1px solid #dadce0;
+      background: white;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn.active {
+      background: #1f73db;
+      color: white;
+      border-color: #1f73db;
+    }
+
+    .filter-btn:hover {
+      border-color: #1f73db;
+    }
+
+    .settings-content {
+      display: none;
+    }
+
+    .settings-content.active {
+      display: block;
+    }
+
+    .settings-group {
+      background: white;
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .settings-group label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .settings-hint {
+      font-size: 11px;
+      color: #5f6368;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .settings-hint code {
+      background: #f1f3f4;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 10px;
+    }
+
+    .settings-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #1f73db;
+      color: white;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: #1765cc;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-danger {
+      background: #f8f9fa;
+      color: #d33b27;
+      border: 1px solid #dadce0;
+      flex: 1;
+    }
+
+    .btn-danger:hover {
+      background: #fde7e6;
+    }
+
+    .footer {
+      padding: 12px;
+      border-top: 1px solid #dadce0;
+      background: #f8f9fa;
+      text-align: center;
+      font-size: 12px;
+      color: #5f6368;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="history">History</button>
+    <button class="tab" data-tab="overview">Overview</button>
+  </div>
+
+  <!-- History Tab -->
+  <div class="session-selector active" id="historySessionSelector">
+    <label>Select Session:</label>
+    <select id="sessionSelect">
+      <option value="">Loading sessions...</option>
+    </select>
+  </div>
+
+  <div class="session-metadata active" id="historySessionMetadata">
+    <div class="metadata-row" id="metadataAgentRow" style="display:none;">
+      <span class="metadata-label">🤖 Agent:</span>
+      <span class="metadata-value" id="metadataAgent">-</span>
+    </div>
+    <div class="metadata-row">
+      <span class="metadata-label">Started:</span>
+      <span class="metadata-value" id="metadataStartTime">-</span>
+    </div>
+    <div class="metadata-row">
+      <span class="metadata-label">Duration:</span>
+      <span class="metadata-value" id="metadataDuration">-</span>
+    </div>
+    <div class="metadata-row">
+      <span class="metadata-label">Commands:</span>
+      <span class="metadata-value" id="metadataCommandCount">-</span>
+    </div>
+  </div>
+
+  <div class="filters" id="historyTab">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="success">✓ Success</button>
+    <button class="filter-btn" data-filter="error">✕ Error</button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div class="overview-header" id="overviewHeader" style="display: none;">
+    <h2>All Sessions</h2>
+    <span class="session-count" id="totalSessionCount">0 sessions</span>
+  </div>
+
+  <div class="content">
+    <div class="commands-container" id="commandsContainer">
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <p>Loading commands...</p>
+      </div>
+    </div>
+
+    <div class="session-list" id="sessionList" style="display: none;">
+      <!-- Sessions will be rendered here -->
+    </div>
+  </div>
+
+  <!-- Settings Tab (hidden by default) -->
+  <div class="content settings-content" id="settingsTab">
+    <div class="settings-group">
+      <label>Bridge Token (optional)</label>
+      <p class="settings-hint">Only needed if your MCP server is started with <code>BROWSER_BRIDGE_TOKEN</code>. The bridge URL is auto-discovered on ports 17374–17383.</p>
+      <input id="bridgeToken" type="password" placeholder="Leave empty if not needed" />
+    </div>
+    <div class="settings-group">
+      <label>Agent Name</label>
+      <p class="settings-hint">Set <code>BROWSER_AGENT_NAME</code> env var in your MCP server config to identify commands by agent in the history.</p>
+      <input id="agentNameDisplay" type="text" placeholder="Configured via BROWSER_AGENT_NAME env var" disabled />
+    </div>
+    <div class="button-row">
+      <button class="btn-primary" id="saveSettings">Save Token</button>
+    </div>
+  </div>
+
+  <div class="footer" id="footer">0 commands</div>
+
+  <script src="db.js"></script>
+  <script src="sidebar.js"></script>
+</body>
+</html>

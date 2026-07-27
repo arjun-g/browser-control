@@ -22,6 +22,7 @@ async function handleBridgeCommand(message, sendFn) {
       command: {
         action: message.action,
         params: message.params ?? {},
+        agent: message.agent ?? "unknown",
       },
     });
 

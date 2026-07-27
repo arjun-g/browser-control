@@ -66,6 +66,7 @@ export type BridgeCommand = {
   id: string;
   action: CommandAction;
   params: Record<string, unknown>;
+  agent?: string;
 };
 
 export type BridgeResult = {

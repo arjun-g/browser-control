@@ -1,0 +1,106 @@
+## Browser Control Bridge - Give AI Full Control of Your Browser
+
+Browser Control Bridge is a powerful extension that connects Chrome and Edge to AI agents via Model Context Protocol (MCP). Automate everything from simple navigation to complex DOM manipulation with natural language commands.
+
+### 🎯 What It Does
+
+Connect any MCP-enabled AI tool (Claude, Copilot, Gemini, etc.) to your browser and give it full control:
+- Navigate websites and handle complex interactions
+- Take screenshots and analyze visual content
+- Read and manipulate DOM elements
+- Monitor performance and Core Web Vitals
+- Execute JavaScript and inject CSS
+- Manage tabs, cookies, downloads, and more
+
+### ✨ 40+ Automation Tools
+
+**Navigation & Tabs**
+- Navigate to URLs, go back/forward, reload
+- Open, close, and organize tabs
+- Create and manage tab groups
+
+**Interaction**
+- Click, type, and press keys
+- Scroll, drag and drop
+- Mouse movements and focus management
+
+**DOM & Content**
+- Read full DOM snapshots
+- Extract and analyze page elements
+- Take full-page screenshots
+- Wait for elements or navigation
+
+**JavaScript & Styling**
+- Execute custom JavaScript code
+- Inject CSS styles dynamically
+
+**Browser State**
+- Manage cookies
+- Set viewport and window size
+- Emulate mobile devices
+- Toggle fullscreen
+
+**Analytics**
+- Get Core Web Vitals metrics
+- Monitor performance data
+- Read console logs
+
+### 🤖 Use Cases
+
+✅ **AI Web Automation** - Let AI agents handle repetitive browser tasks automatically
+
+✅ **Intelligent Testing** - Write tests in your preferred language with AI-powered debugging
+
+✅ **Web Scraping** - Extract data from complex dynamic websites using AI understanding
+
+✅ **Performance Analysis** - Monitor and optimize your website's performance with AI insights
+
+✅ **Bug Investigation** - AI systematically reproduces bugs and generates detailed reports
+
+✅ **Competitive Intelligence** - Automatically monitor competitor websites and extract insights
+
+### 🔒 Secure & Local
+
+- **No data collection** - Everything stays on your machine
+- **Local WebSocket** - Secure communication between extension and AI server
+- **Optional authentication** - Token-based security available
+- **Open source** - Full transparency and community-driven development
+
+### 🚀 Quick Start
+
+1. **Install this extension**
+2. **Install MCP Server**: `npm install -g @browser-control/mcp-server`
+3. **Start Server**: `mcp-server`
+4. **Configure your AI client** to use Browser Control MCP
+5. **Start automating** with natural language commands!
+
+### 📖 Documentation & Support
+
+- **Website**: https://browser-control.arjun.tools
+- **GitHub**: https://github.com/arjun-1/browser-control
+- **Support**: support@arjun.tools
+- **Privacy Policy**: See extension details
+
+### 🔧 Developer Friendly
+
+- Open source TypeScript codebase
+- Comprehensive protocol definitions
+- Easy to extend and customize
+- Published on NPM for easy distribution
+
+### 📋 Permissions Explanation
+
+This extension needs these permissions to work:
+- `tabs` - To manage and control browser tabs
+- `scripting` - To run automation scripts
+- `storage` - To store command history locally
+- `cookies` - To manage browser cookies
+- `debugger` - For advanced Chrome DevTools features
+- And more... (see Privacy Policy for complete details)
+
+---
+
+**Browser Control Bridge** - Empowering AI agents to control the web, one browser action at a time.
+
+Version 0.1.0
+Last Updated: July 2026

@@ -5,3 +5,7 @@ coverage/
 .env
 .DS_Store
 .vscode/
+*.zip
+*.map
+.tmp-npm-bin-check/
+tmp-npm-bin-check/

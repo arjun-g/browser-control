@@ -1,19 +1,28 @@
 {
   "manifest_version": 3,
   "name": "Browser Control Bridge",
+  "short_name": "Browser Control",
   "version": "0.1.0",
-  "description": "Connects Chrome/Edge sessions to a local MCP bridge server.",
-  "permissions": ["tabs", "scripting", "activeTab", "storage", "alarms", "debugger", "offscreen"],
+  "description": "Control Chrome/Edge with AI agents via MCP. 40+ browser automation tools, local & secure.",
+  "author": "Browser Control Team",
+  "homepage_url": "https://github.com/arjun-1/browser-control",
+  "icons": {
+    "128": "icons/logo.png"
+  },
+  "permissions": ["tabs", "scripting", "activeTab", "storage", "alarms", "debugger", "offscreen", "cookies", "tabGroups", "downloads", "sidePanel"],
   "host_permissions": ["<all_urls>", "ws://127.0.0.1/*", "ws://localhost/*"],
   "background": {
     "service_worker": "service-worker.js",
     "type": "module"
   },
-  "options_ui": {
-    "page": "options.html",
-    "open_in_tab": true
+  "side_panel": {
+    "default_path": "sidebar.html"
   },
   "action": {
     "default_title": "Browser Control Bridge"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
   }
 }

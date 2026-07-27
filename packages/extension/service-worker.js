@@ -7,6 +7,24 @@ const DEFAULT_BRIDGE_URL = "ws://127.0.0.1:17374";
 const debuggerAttachedTabs = new Set();
 let creatingOffscreenDocument;
 
+// Per-agent session map — each unique agent name gets its own session ID.
+// Stored in memory only: a service worker restart (browser/extension reload)
+// intentionally creates fresh sessions for all agents.
+const agentSessions = {};
+
+function getOrCreateAgentSession(agent) {
+  const key = agent || "unknown";
+  if (!agentSessions[key]) {
+    agentSessions[key] = Date.now();
+    // Ensure IDs are unique even if two agents connect at the same millisecond
+    const existing = Object.values(agentSessions);
+    while (existing.filter((v) => v === agentSessions[key]).length > 1) {
+      agentSessions[key]++;
+    }
+  }
+  return agentSessions[key];
+}
+
 async function getBridgeConfig() {
   const config = await chrome.storage.local.get({
     bridgeUrl: DEFAULT_BRIDGE_URL,
@@ -383,8 +401,9 @@ async function handleCommand(action, params) {
   }
 
   if (action === "read_dom") {
+    const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
     return executeInTab(
-      tab.id,
+      targetTabId,
       (maxChars) => {
         const html = document.documentElement?.outerHTML ?? "";
         const cut = Math.max(1, Number(maxChars) || 200000);
@@ -680,6 +699,7 @@ async function handleCommand(action, params) {
     const code = typeof params.code === "string" ? params.code : "";
     if (!code) throw new Error("Missing code");
 
+    await ensureDebuggerAttached(targetTabId);
     const result = await cdpEvaluate(targetTabId, code);
     return { ok: true, tabId: targetTabId, result };
   }
@@ -926,15 +946,18 @@ async function handleCommand(action, params) {
       const elements = Array.from(document.querySelectorAll("h1, h2, h3, p, a, button, input, textarea")).map((el) => ({
         tag: el.tagName.toLowerCase(),
         text: getText(el),
-        classes: el.className,
-        id: el.id,
+        id: el.id || undefined,
+        class: el.className || undefined,
+        type: el.type || undefined,
       }));
 
       return {
         ok: true,
-        url: window.location.href,
-        title: document.title,
-        elements: elements.slice(0, 100),
+        snapshot: {
+          title: document.title,
+          url: window.location.href,
+          elements: elements.slice(0, 100),
+        },
       };
     }, []);
 
@@ -945,155 +968,238 @@ async function handleCommand(action, params) {
     const targetTabId = Number.isInteger(params.tabId) ? params.tabId : tab.id;
 
     const result = await executeInTab(targetTabId, () => {
-      const snapshot = {
-        url: window.location.href,
-        title: document.title,
-        headings: [],
-        buttons: [],
-        links: [],
-        inputs: [],
-        forms: [],
+      const getText = (el) => el.textContent?.trim()?.substring(0, 300) ?? "";
+
+      const headings = Array.from(document.querySelectorAll("h1, h2, h3, h4, h5, h6")).map((el) => ({
+        level: parseInt(el.tagName[1]),
+        text: getText(el),
+      }));
+
+      const buttons = Array.from(document.querySelectorAll("button, [role='button']")).map((el) => ({
+        text: getText(el),
+        id: el.id || undefined,
+        class: el.className?.substring(0, 100) || undefined,
+      }));
+
+      const links = Array.from(document.querySelectorAll("a")).map((el) => ({
+        text: getText(el),
+        href: el.href || undefined,
+      }));
+
+      const forms = Array.from(document.querySelectorAll("form")).map((form) => ({
+        id: form.id || undefined,
+        inputs: Array.from(form.querySelectorAll("input, textarea, select")).map((inp) => ({
+          name: inp.name || undefined,
+          type: inp.type || undefined,
+          placeholder: inp.placeholder || undefined,
+        })),
+      }));
+
+      return {
+        ok: true,
+        snapshot: {
+          title: document.title,
+          url: window.location.href,
+          headings,
+          buttons,
+          links,
+          forms,
+        },
       };
-
-      document.querySelectorAll("h1, h2, h3").forEach((h) => {
-        const text = h.textContent?.trim() ?? "";
-        if (text) snapshot.headings.push(text.substring(0, 200));
-      });
-
-      document.querySelectorAll("button").forEach((b) => {
-        const text = b.textContent?.trim() ?? "";
-        if (text) snapshot.buttons.push(text.substring(0, 100));
-      });
-
-      document.querySelectorAll("a").forEach((a) => {
-        const text = a.textContent?.trim() ?? "";
-        const href = a.href ?? "";
-        if (text && href) snapshot.links.push({ text: text.substring(0, 100), href });
-      });
-
-      document.querySelectorAll("input").forEach((input) => {
-        snapshot.inputs.push({
-          type: input.type,
-          name: input.name,
-          placeholder: input.placeholder,
-        });
-      });
-
-      document.querySelectorAll("form").forEach((form) => {
-        snapshot.forms.push({
-          id: form.id,
-          action: form.action,
-          method: form.method,
-        });
-      });
-
-      return { ok: true, ...snapshot };
     }, []);
 
     return { ...result, tabId: targetTabId };
   }
 
   if (action === "list_downloads") {
-    const query = params.query || {};
+    const query = params.query && typeof params.query === "object" ? params.query : {};
     const downloads = await chrome.downloads.search(query);
-
-    return {
-      ok: true,
-      downloads: downloads.map((d) => ({
-        id: d.id,
-        filename: d.filename,
-        url: d.url,
-        startTime: d.startTime,
-        endTime: d.endTime,
-        state: d.state,
-        bytesReceived: d.bytesReceived,
-        totalBytes: d.totalBytes,
-      })),
-    };
+    return { ok: true, downloads };
   }
 
   if (action === "create_tab_group") {
+    if (!chrome.tabGroups) throw new Error("Tab groups not supported in this browser");
     const title = typeof params.title === "string" ? params.title : "Group";
-    const color = ["grey", "blue", "red", "yellow", "green", "pink", "purple", "cyan"].includes(params.color)
-      ? params.color
-      : "grey";
+    const color = typeof params.color === "string" ? params.color : "grey";
+    const tabIds = Array.isArray(params.tabIds) && params.tabIds.length > 0
+      ? params.tabIds.filter((id) => Number.isInteger(id))
+      : [tab.id];
 
-    try {
-      const tabIds = Array.isArray(params.tabIds) ? params.tabIds.filter((id) => Number.isInteger(id)) : [];
-      const group = await chrome.tabGroups.create({ tabIds, title, color });
-      return { ok: true, groupId: group.id, title, color };
-    } catch (err) {
-      return { ok: false, error: err.message };
-    }
+    const groupId = await chrome.tabs.group({ tabIds });
+    await chrome.tabGroups.update(groupId, { title, color });
+    return { ok: true, groupId, title, color, tabIds };
   }
 
   if (action === "delete_tab_group") {
-    const groupId = Number.isInteger(params.groupId) ? params.groupId : -1;
-    if (groupId < 0) throw new Error("Invalid groupId");
+    if (!chrome.tabGroups) throw new Error("Tab groups not supported in this browser");
+    const groupId = Number.isInteger(params.groupId) ? params.groupId : null;
+    if (!groupId) throw new Error("Missing groupId");
 
-    try {
-      await chrome.tabGroups.remove(groupId);
-      return { ok: true, groupId };
-    } catch (err) {
-      return { ok: false, error: err.message };
+    // Ungroup all tabs in the group (Chrome has no direct group delete)
+    const groupTabs = await chrome.tabs.query({ groupId });
+    if (groupTabs.length > 0) {
+      await chrome.tabs.ungroup(groupTabs.map((t) => t.id));
     }
+    return { ok: true, groupId };
   }
 
-
-
-async function initializeBridgeBackground() {
-  ensureWakeAlarm();
-  await ensureOffscreenDocument();
-  await notifyOffscreenConfigUpdated();
+  throw new Error(`Unsupported action: ${action}`);
 }
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type === "bridge-command") {
-    const command = message.command ?? {};
-    handleCommand(command.action, command.params ?? {})
-      .then((result) => sendResponse({ ok: true, result }))
-      .catch((error) => sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) }));
-    return true;
+async function initializeBridgeBackground() {
+  try {
+    // Ensure offscreen document exists to manage bridge connections
+    await ensureOffscreenDocument();
+    // Notify offscreen of any bridge config updates
+    const config = await getBridgeConfig();
+    if (chrome.runtime?.sendMessage) {
+      chrome.runtime.sendMessage({
+        type: "bridge-config",
+        config,
+      }).catch(() => {
+        // Offscreen document may not be ready yet
+      });
+    }
+  } catch (error) {
+    console.error("Failed to initialize bridge:", error);
   }
+}
 
-  if (message?.type === "bridge-get-config") {
-    getBridgeConfig()
-      .then((config) => sendResponse({ ok: true, config }))
-      .catch((error) => sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) }));
-    return true;
-  }
-
-  return false;
+// Initialize bridge on startup
+initializeBridgeBackground().catch((error) => {
+  console.error("Bridge initialization failed:", error);
 });
 
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName !== "local") {
-    return;
+// Setup side panel on startup
+if (chrome.sidePanel) {
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch((error) => console.error("Failed to set panel behavior:", error));
+}
+
+// Listen for messages from offscreen document
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "bridge-command") {
+    // Handle commands from offscreen document (via bridge)
+    const startTime = Date.now();
+    const agent = typeof message.command.agent === "string" ? message.command.agent : "unknown";
+    handleCommand(message.command.action, message.command.params)
+      .then(async (result) => {
+        // Track successful command under this agent's session
+        const sessionId = getOrCreateAgentSession(agent);
+        await trackCommand(sessionId, message.command.action, message.command.params, result, "success", agent);
+        
+        // Notify sidebar of new command
+        chrome.runtime.sendMessage({
+          type: "command-executed",
+          command: {
+            action: message.command.action,
+            params: message.command.params,
+            result,
+            status: "success",
+            timestamp: startTime,
+            agent,
+          },
+        }).catch(() => {});
+        
+        sendResponse({ ok: true, result });
+      })
+      .catch(async (error) => {
+        // Track failed command under this agent's session
+        const sessionId = getOrCreateAgentSession(agent);
+        await trackCommand(sessionId, message.command.action, message.command.params, { error: error.message }, "error", agent);
+        
+        sendResponse({ ok: false, error: error instanceof Error ? error.message : String(error) });
+      });
+    return true; // Keep the message channel open for async response
+  } else if (message.type === "bridge-config-updated") {
+    initializeBridgeBackground().catch(console.error);
   }
-
-  if (changes.bridgeUrl || changes.bridgeToken) {
-    notifyOffscreenConfigUpdated();
-  }
 });
 
-chrome.runtime.onStartup.addListener(() => {
-  initializeBridgeBackground();
-});
+// Toggle side panel when extension icon is clicked
+if (chrome.action) {
+  chrome.action.onClicked.addListener(async (tab) => {
+    try {
+      if (chrome.sidePanel) {
+        // Simply open the side panel for this tab
+        await chrome.sidePanel.open({ tabId: tab.id });
+      }
+    } catch (error) {
+      console.error("Failed to open side panel:", error);
+    }
+  });
+}
 
-chrome.runtime.onInstalled.addListener(() => {
-  initializeBridgeBackground();
-});
+// Track command in IndexedDB
+async function trackCommand(sessionId, action, params, result, status, agent = "unknown") {
+  return new Promise((resolve) => {
+    const request = indexedDB.open("browser-control", 1);
+    
+    request.onerror = () => resolve();
+    request.onsuccess = () => {
+      try {
+        const db = request.result;
+        
+        // Ensure session exists in sessions table
+        const sessionTx = db.transaction(["sessions"], "readwrite");
+        const sessionStore = sessionTx.objectStore("sessions");
+        const checkRequest = sessionStore.get(sessionId);
+        
+        checkRequest.onsuccess = () => {
+          if (!checkRequest.result) {
+            // Session doesn't exist, create it
+            sessionStore.add({
+              id: sessionId,
+              startTime: new Date().toISOString(),
+              commandCount: 1,
+              agent,
+            });
+          } else {
+            // Increment commandCount
+            const existing = checkRequest.result;
+            sessionStore.put({ ...existing, commandCount: (existing.commandCount || 0) + 1 });
+          }
+          
+          // Now add the command
+          const cmdTx = db.transaction(["commands"], "readwrite");
+          const cmdStore = cmdTx.objectStore("commands");
+          
+          cmdStore.add({
+            sessionId,
+            action,
+            params,
+            result,
+            status,
+            agent,
+            timestamp: Date.now(),
+            iso: new Date().toISOString(),
+          });
+          
+          cmdTx.oncomplete = () => resolve();
+          cmdTx.onerror = () => resolve();
+        };
+        
+        checkRequest.onerror = () => resolve();
+      } catch (e) {
+        resolve();
+      }
+    };
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === WAKE_ALARM_NAME) {
-    initializeBridgeBackground();
-  }
-});
+    request.onupgradeneeded = (event) => {
+      try {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains("sessions")) {
+          db.createObjectStore("sessions", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("commands")) {
+          const store = db.createObjectStore("commands", { keyPath: "id", autoIncrement: true });
+          store.createIndex("sessionId", "sessionId", { unique: false });
+        }
+      } catch (e) {
+        resolve();
+      }
+    };
+  });
+}
 
-chrome.debugger.onDetach.addListener((source) => {
-  if (source?.tabId !== undefined) {
-    debuggerAttachedTabs.delete(source.tabId);
-  }
-});
-
-initializeBridgeBackground();
