@@ -7,7 +7,17 @@ import { BrowserBridge } from "./bridge.js";
 const PREFERRED_PORT = process.env.BROWSER_BRIDGE_PORT ? Number(process.env.BROWSER_BRIDGE_PORT) : undefined;
 const BRIDGE_TOKEN = process.env.BROWSER_BRIDGE_TOKEN;
 
-const bridge = await BrowserBridge.create(PREFERRED_PORT, BRIDGE_TOKEN);
+// Parse command-line arguments for agentName
+const args = process.argv.slice(2);
+let agentName: string | undefined;
+for (let i = 0; i < args.length; i++) {
+  if ((args[i] === "--agent-name" || args[i] === "-a") && args[i + 1]) {
+    agentName = args[i + 1];
+    break;
+  }
+}
+
+const bridge = await BrowserBridge.create(PREFERRED_PORT, BRIDGE_TOKEN, agentName);
 process.stderr.write(`Browser bridge listening on ws://127.0.0.1:${bridge.port}\n`);
 
 const server = new McpServer({

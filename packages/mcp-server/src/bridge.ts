@@ -12,9 +12,6 @@ import { BRIDGE_CANDIDATE_PORTS } from "@browser-control/shared";
 
 const MAX_MESSAGE_BYTES = 2_000_000;
 
-// Agent name injected into every command for tracking in the sidebar
-const AGENT_NAME = process.env.BROWSER_AGENT_NAME || process.env.npm_lifecycle_script || "mcp-agent";
-
 type BrowserClient = {
   id: string;
   browser: BrowserKind;
@@ -31,22 +28,26 @@ type PendingCommand = {
 export class BrowserBridge {
   private readonly wss: WebSocketServer;
   private readonly token?: string;
+  private readonly agentName: string;
   private readonly clients = new Map<string, BrowserClient>();
   private readonly pending = new Map<string, PendingCommand>();
   readonly port: number;
 
-  private constructor(wss: WebSocketServer, port: number, token?: string) {
+  private constructor(wss: WebSocketServer, port: number, agentName: string, token?: string) {
     this.wss = wss;
     this.port = port;
+    this.agentName = agentName;
     this.token = token;
     this.wss.on("connection", (socket) => this.handleConnection(socket));
   }
 
   /** Bind to the first available port from the candidate list (preferred port tried first). */
-  static async create(preferredPort?: number, token?: string): Promise<BrowserBridge> {
+  static async create(preferredPort?: number, token?: string, agentName?: string): Promise<BrowserBridge> {
     const candidates: number[] = preferredPort
       ? [preferredPort, ...(BRIDGE_CANDIDATE_PORTS as readonly number[]).filter((p) => p !== preferredPort)]
       : [...BRIDGE_CANDIDATE_PORTS];
+
+    const finalAgentName = agentName || process.env.BROWSER_AGENT_NAME || process.env.npm_lifecycle_script || "mcp-agent";
 
     for (const port of candidates) {
       try {
@@ -55,7 +56,7 @@ export class BrowserBridge {
           server.once("listening", () => resolve(server));
           server.once("error", reject);
         });
-        return new BrowserBridge(wss, port, token);
+        return new BrowserBridge(wss, port, finalAgentName, token);
       } catch (err) {
         if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") continue;
         throw err;
@@ -134,7 +135,7 @@ export class BrowserBridge {
       id,
       action: args.action,
       params: args.params,
-      agent: AGENT_NAME,
+      agent: this.agentName,
     };
 
     const payload = JSON.stringify(cmd);
