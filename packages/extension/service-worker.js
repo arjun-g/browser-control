@@ -709,7 +709,7 @@ async function handleCommand(action, params) {
 
     await ensureDebuggerAttached(targetTabId);
 
-    const mobileDevices: Record<string, any> = {
+    const mobileDevices = {
       "iPhone 12": { width: 390, height: 844, deviceScaleFactor: 3, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X)" },
       "iPhone 14": { width: 390, height: 844, deviceScaleFactor: 3, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)" },
       "Pixel 6": { width: 412, height: 915, deviceScaleFactor: 2.75, mobile: true, hasTouch: true, userAgent: "Mozilla/5.0 (Linux; Android 12)" },
