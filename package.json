@@ -16,6 +16,6 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@browser-control/mcp-server": "^0.1.1"
+    "@browser-control/mcp-server": "^0.2.2"
   }
 }
