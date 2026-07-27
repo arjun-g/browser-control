@@ -1,6 +1,6 @@
 {
   "name": "@browser-control/mcp-server",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "MCP server for controlling existing Chrome/Edge sessions via extension bridge",
   "license": "MIT",
   "keywords": [
@@ -32,12 +32,12 @@
     "prepack": "npm run build"
   },
   "dependencies": {
+    "@browser-control/shared": "0.1.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "ws": "^8.18.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@browser-control/shared": "0.1.0",
     "@types/ws": "^8.5.14",
     "tsx": "^4.20.3",
     "typescript": "^5.7.3"
