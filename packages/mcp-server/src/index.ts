@@ -12,7 +12,7 @@ process.stderr.write(`Browser bridge listening on ws://127.0.0.1:${bridge.port}\
 
 const server = new McpServer({
   name: "browser-control-mcp",
-  version: "0.1.5",
+  version: "0.1.6",
 });
 
 const browserParam = z.enum(["chrome", "edge", "firefox"]).optional();
