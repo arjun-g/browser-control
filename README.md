@@ -1,159 +1,198 @@
-# Browser Control (MCP + Extension)
+# Browser Control Bridge
 
-Browser Control lets MCP-enabled AI tools control existing Chrome or Edge sessions through a local bridge extension.
+Control Chrome and Edge with AI agents through Model Context Protocol (MCP).
 
-## Features
+Website: https://browser-control.arjun.tools
 
-- Generic browser-control primitives (not workflow-specific)
-- Existing-session control for Chrome and Edge
-- Standard actions: navigate, history, click, type, keypress, DOM read, screenshot
-- Debugger-backed CDP actions: attach/detach/status, click/type/keypress/scroll, waits, full-page screenshot
-- Offscreen bridge client for better Manifest V3 reliability
+## What It Does
 
-## Project Structure
+Browser Control Bridge connects your MCP client (Claude, GitHub Copilot, Cursor, Continue.dev, and others) to a local browser extension so your agent can:
 
-- `packages/mcp-server`: MCP stdio server and websocket bridge
-- `packages/extension`: MV3 extension (service worker, offscreen bridge, options page)
-- `packages/shared`: shared protocol types
+- Navigate pages and manage tabs
+- Click, type, scroll, and interact with UI elements
+- Read and snapshot DOM content
+- Run JavaScript and inject CSS
+- Capture screenshots
+- Inspect performance metrics and Core Web Vitals
+- Use Chrome DevTools Protocol (CDP) commands
 
-## Local Development
+## Powerful Features
 
-1. Install dependencies
+- Seamless MCP integration with existing browser sessions
+- 40+ browser automation tools
+- Full DOM interaction and extraction
+- Performance and debugging insights
+- Tab and window management
+- CDP support for advanced workflows
 
-```bash
-npm install
-```
+## Get Started
 
-2. Build
+### 1. Install Extension
 
-```bash
-npm run build
-```
+Store listings are currently under review. Until they are live, load the extension from GitHub.
 
-3. Load extension
-
-- Open browser extensions page
-- Enable developer mode
-- Load unpacked extension from `packages/extension`
-
-4. Configure extension (optional)
-
-- Open extension details > Extension options
-- Set `Bridge WebSocket URL` and optional token
-
-5. Run MCP server
+### 2. Load Extension from GitHub (Temporary)
 
 ```bash
-npm run dev
+git clone https://github.com/arjun-g/browser-control.git
 ```
 
-6. Run tests
+Then in your browser:
+
+1. Open extensions page:
+   - Chrome: `chrome://extensions/`
+   - Edge: `edge://extensions/`
+2. Enable Developer mode
+3. Click "Load unpacked"
+4. Select `packages/extension`
+
+### 3. Start MCP Server
+
+Use published package via `npx`:
 
 ```bash
-npm test
+npx -y @browser-control/mcp-server
 ```
 
-Environment variables:
+Or install globally and run the binary:
 
-- `BROWSER_BRIDGE_PORT` (default `17374`)
-- `BROWSER_BRIDGE_TOKEN` (optional)
-
-## Use In MCP Clients
-
-Local source mode:
-
-```json
-{
-  "mcpServers": {
-    "browser-control-dev": {
-      "command": "npx",
-      "args": ["tsx", "packages/mcp-server/src/index.ts"]
-    }
-  }
-}
+```bash
+npm install -g @browser-control/mcp-server
+browser-control-mcp
 ```
 
-Published `npx` mode:
+Optional flags/env:
+
+- `--agent-name` or `-a` to set agent name
+- `BROWSER_BRIDGE_PORT` to set preferred bridge port
+- `BROWSER_BRIDGE_TOKEN` to require token auth
+- `BROWSER_AGENT_NAME` as fallback agent name
+
+### 4. Configure Your AI Client
+
+Common MCP config:
 
 ```json
 {
   "mcpServers": {
     "browser-control": {
       "command": "npx",
-      "args": ["-y", "@browser-control/mcp-server"],
-      "env": {
-        "BROWSER_BRIDGE_PORT": "17374"
-      }
+      "args": ["-y", "@browser-control/mcp-server"]
     }
   }
 }
 ```
 
-## Publish MCP Package For `npx`
-
-From `packages/mcp-server`:
+#### Claude Code
 
 ```bash
-npm version patch
-npm publish --access public
+claude mcp add browser-control -- npx -y @browser-control/mcp-server
 ```
 
-Notes:
+#### GitHub Copilot (VS Code)
 
-- Package exposes CLI binary: `browser-control-mcp`
-- `prepack` runs build automatically
+Add the MCP server in VS Code MCP settings (or `.vscode/settings.json`) and enable Agent mode in Copilot Chat.
 
-## Deploy Extension To Stores
+#### Cursor
 
-Chrome Web Store and Edge Add-ons both accept zipped extension packages.
+Use Settings -> Features -> MCP -> Add New MCP Server:
 
-### Prepare package
+- Name: `browser-control`
+- Command: `npx`
+- Args: `-y @browser-control/mcp-server`
 
-1. Ensure version in `packages/extension/manifest.json` is updated.
-2. Create a zip of all files inside `packages/extension`.
-3. Do not include workspace files (`node_modules`, tests, root config files).
+#### Continue.dev
 
-### Chrome Web Store
+Add the same MCP config to `~/.continue/config.json`.
 
-1. Open Chrome Web Store Developer Dashboard
-2. Create item or update existing item
-3. Upload extension zip
-4. Fill listing details, privacy disclosures, permissions justification
-5. Submit for review
+## MCP Tools
 
-### Edge Add-ons
+### Navigation and Tabs
 
-1. Open Microsoft Partner Center (Edge Add-ons)
-2. Create submission or update existing extension
-3. Upload same extension zip (or Edge-targeted variant)
-4. Complete listing and compliance fields
-5. Submit for certification
-
-## Tool Surface
-
-- `list_browser_clients`
 - `navigate`
 - `back`
 - `forward`
+- `new_tab`
+- `close_tab`
+- `close_tabs`
+- `reload_tab`
+- `list_tabs`
+- `get_current_tab`
+- `create_tab_group`
+- `delete_tab_group`
+
+### Interaction
+
 - `click`
 - `type`
 - `keypress`
+- `scroll`
+- `mouse_move`
+- `drag_and_drop`
+- `focus_element`
+- `blur_element`
+- `scroll_element`
+
+### DOM and Content
+
 - `read_dom`
+- `dom_snapshot`
+- `minimal_snapshot`
+- `semantic_snapshot`
+- `dom_extract_element`
 - `screenshot`
-- `attach_debugger`
-- `detach_debugger`
-- `debugger_status`
-- `cdp_command`
-- `cdp_click`
-- `cdp_type`
-- `cdp_keypress`
-- `cdp_scroll`
-- `cdp_wait_for_selector`
+- `wait_for_selector`
 - `wait_for_navigation`
-- `cdp_screenshot`
 
-## Notes
+### JavaScript and Styling
 
-- Actions target the active tab in the most recently focused window.
-- `attach_debugger` triggers the browser infobar by design.
-- Firefox support is deferred for now.
+- `execute_javascript`
+- `add_css`
+
+### Browser State
+
+- `get_cookies`
+- `set_cookie`
+- `delete_cookie`
+- `set_viewport`
+- `resize_window`
+- `emulate_mobile`
+- `toggle_fullscreen`
+
+### Analytics and Debugging
+
+- `get_performance_metrics`
+- `get_web_vitals`
+- `get_console_logs`
+- `list_downloads`
+- `cdp_command`
+
+## How It Works
+
+- MCP server: Node.js process exposing browser tools over MCP
+- Browser extension: Manifest V3 extension running in Chrome/Edge
+- WebSocket bridge: local connection between server and extension
+
+Everything runs locally on your machine.
+
+## Local Development
+
+```bash
+npm install
+npm run build
+npm test
+```
+
+Project structure:
+
+- `packages/mcp-server`: MCP server and bridge
+- `packages/extension`: Browser extension
+- `packages/shared`: Shared protocol types
+- `website`: Landing page
+
+## Support and Links
+
+- Website: https://browser-control.arjun.tools
+- GitHub: https://github.com/arjun-g/browser-control
+- Issues: https://github.com/arjun-g/browser-control/issues
+- Privacy Policy: https://browser-control.arjun.tools/privacy-policy
