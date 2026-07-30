@@ -39,9 +39,9 @@ Complete this checklist before submitting Browser Control Bridge to the Chrome W
 - [ ] All screenshots have descriptive alt text ready
 
 ### 4. Store Metadata
-- [x] PRIVACY_POLICY.md - Explains data handling
-- [x] STORE_DESCRIPTION.txt - Full store description
-- [x] STORE_SHORT_DESCRIPTION.txt - Short description (≤132 chars)
+- [x] `docs/PRIVACY_POLICY.md` - Explains data handling
+- [x] `docs/STORE_DESCRIPTION.txt` - Full store description
+- [x] `docs/STORE_SHORT_DESCRIPTION.txt` - Short description (≤132 chars)
 - [ ] Support URL ready: support@arjun.tools
 - [ ] Support page created on website
 
@@ -105,9 +105,6 @@ browser-control.zip
 ├── db.js
 ├── icons/
 │   └── logo.png (128x128)
-├── PRIVACY_POLICY.md
-├── STORE_DESCRIPTION.txt
-├── STORE_SHORT_DESCRIPTION.txt
 └── store-assets/
     ├── screenshots/
     │   ├── screenshot-1.png
@@ -143,13 +140,13 @@ browser-control.zip
 
 **Basic Information:**
 - [ ] Name: "Browser Control Bridge"
-- [ ] Short description: Copy from `STORE_SHORT_DESCRIPTION.txt`
-- [ ] Full description: Copy from `STORE_DESCRIPTION.txt`
+- [ ] Short description: Copy from `docs/STORE_SHORT_DESCRIPTION.txt`
+- [ ] Full description: Copy from `docs/STORE_DESCRIPTION.txt`
 - [ ] Category: Select "Productivity"
 - [ ] Language: English
 
 **Detailed Description:**
-- [ ] Paste content from `STORE_DESCRIPTION.txt`
+- [ ] Paste content from `docs/STORE_DESCRIPTION.txt`
 - [ ] Include all use cases and features
 - [ ] Add setup instructions
 - [ ] Include links to GitHub and website

@@ -11,9 +11,9 @@ This guide walks you through publishing **Browser Control Bridge** to the Chrome
 
 ### Extension Files Updated
 - [manifest.json](./packages/extension/manifest.json) - Added short_name, author, homepage_url, improved description
-- [PRIVACY_POLICY.md](./packages/extension/PRIVACY_POLICY.md) - Complete privacy policy explaining local-only operation
-- [STORE_DESCRIPTION.txt](./packages/extension/STORE_DESCRIPTION.txt) - Full store listing description with features and use cases
-- [STORE_SHORT_DESCRIPTION.txt](./packages/extension/STORE_SHORT_DESCRIPTION.txt) - 132-character store short description
+- [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) - Complete privacy policy explaining local-only operation
+- [STORE_DESCRIPTION.txt](./STORE_DESCRIPTION.txt) - Full store listing description with features and use cases
+- [STORE_SHORT_DESCRIPTION.txt](./STORE_SHORT_DESCRIPTION.txt) - 132-character store short description
 
 ### Asset Directories Created
 - [store-assets/screenshots/](./packages/extension/store-assets/screenshots/) - For 1280x800 PNG screenshots
@@ -119,9 +119,9 @@ Verify the ZIP file:
 | Complete step-by-step walkthrough | [CHROME_STORE_PUBLISHING.md](./CHROME_STORE_PUBLISHING.md) |
 | Comprehensive pre-submission checklist | [CHROME_STORE_SUBMISSION_CHECKLIST.md](./CHROME_STORE_SUBMISSION_CHECKLIST.md) |
 | Quick lookup (commands, links, timeline) | [CHROME_STORE_QUICK_REFERENCE.md](./CHROME_STORE_QUICK_REFERENCE.md) |
-| Privacy details for store listing | [packages/extension/PRIVACY_POLICY.md](./packages/extension/PRIVACY_POLICY.md) |
-| Store description copy | [packages/extension/STORE_DESCRIPTION.txt](./packages/extension/STORE_DESCRIPTION.txt) |
-| Short description copy | [packages/extension/STORE_SHORT_DESCRIPTION.txt](./packages/extension/STORE_SHORT_DESCRIPTION.txt) |
+| Privacy details for store listing | [PRIVACY_POLICY.md](./PRIVACY_POLICY.md) |
+| Store description copy | [STORE_DESCRIPTION.txt](./STORE_DESCRIPTION.txt) |
+| Short description copy | [STORE_SHORT_DESCRIPTION.txt](./STORE_SHORT_DESCRIPTION.txt) |
 
 ## Testing Before Submission
 
@@ -163,7 +163,7 @@ Then manually test:
 | "Permission denied" | Ensure you own the extension (it's your code) |
 | "Review rejected" | Read the reason carefully, fix, increment version, resubmit |
 | "Screenshots too large" | Use image editor to compress PNGs while maintaining 1280x800 size |
-| "Unclear what extension does" | Use STORE_DESCRIPTION.txt template, be specific about features |
+| "Unclear what extension does" | Use [STORE_DESCRIPTION.txt](./STORE_DESCRIPTION.txt), be specific about features |
 
 ## Support
 

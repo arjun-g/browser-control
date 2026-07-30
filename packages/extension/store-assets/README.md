@@ -111,8 +111,8 @@ When uploading to Chrome Web Store:
 ## See Also
 
 - [CHROME_STORE_PUBLISHING.md](../../CHROME_STORE_PUBLISHING.md) - Full publishing guide
-- [PRIVACY_POLICY.md](../PRIVACY_POLICY.md) - Privacy policy for store listing
-- [STORE_DESCRIPTION.txt](../STORE_DESCRIPTION.txt) - Store description text
+- [PRIVACY_POLICY.md](../../../docs/PRIVACY_POLICY.md) - Privacy policy for store listing
+- [STORE_DESCRIPTION.txt](../../../docs/STORE_DESCRIPTION.txt) - Store description text
 
 ---
 

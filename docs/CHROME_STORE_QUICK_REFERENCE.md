@@ -5,9 +5,9 @@
 ```
 ✅ Complete:
   - manifest.json (updated with short_name, author, homepage_url)
-  - PRIVACY_POLICY.md (local-only, no data collection)
-  - STORE_DESCRIPTION.txt (full feature description)
-  - STORE_SHORT_DESCRIPTION.txt (≤132 characters)
+  - docs/PRIVACY_POLICY.md (local-only, no data collection)
+  - docs/STORE_DESCRIPTION.txt (full feature description)
+  - docs/STORE_SHORT_DESCRIPTION.txt (≤132 characters)
 
 ❌ Still Needed:
   - Screenshots (1280x800 PNG, min 1-5)
@@ -35,8 +35,8 @@ zip -r ../../browser-control.zip . -x "node_modules/*" ".git/*" "*.map"
 |------|----------|
 | Screenshots | `packages/extension/store-assets/screenshots/` |
 | Extra icons | `packages/extension/store-assets/icons/` |
-| Privacy policy | `packages/extension/PRIVACY_POLICY.md` |
-| Store copy | `packages/extension/STORE_DESCRIPTION.txt` |
+| Privacy policy | `docs/PRIVACY_POLICY.md` |
+| Store copy | `docs/STORE_DESCRIPTION.txt` |
 
 ## Common Rejection Reasons & Fixes
 
