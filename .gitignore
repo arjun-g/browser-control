@@ -3,6 +3,7 @@ dist/
 coverage/
 *.log
 .env
+.npmrc
 .DS_Store
 .vscode/
 *.zip

@@ -1,6 +1,6 @@
 {
   "name": "@browser-control/mcp-server",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "MCP server for controlling existing Chrome/Edge sessions via extension bridge",
   "license": "MIT",
   "keywords": [

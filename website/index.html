@@ -232,6 +232,108 @@
       font-weight: 600;
     }
 
+    .use-case-note {
+      max-width: 820px;
+      margin: 0 auto 40px;
+      text-align: center;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    .workflow-card,
+    .demo-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+    }
+
+    .workflow-steps {
+      display: grid;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .workflow-step {
+      background: #f4f8ff;
+      border: 1px solid #d7e5ff;
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .workflow-step strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--primary-dark);
+    }
+
+    .workflow-step p,
+    .demo-card p {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .demo-video-shell {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      min-height: 240px;
+      background: linear-gradient(135deg, #f4f8ff 0%, #eef4ea 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      margin: 20px 0;
+    }
+
+    .demo-video-feature {
+      max-width: 1040px;
+      margin: 0 auto 32px;
+    }
+
+    .demo-video {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #000;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+    }
+
+    .demo-video iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .demo-video-shell strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text);
+      font-size: 18px;
+    }
+
+    .demo-list {
+      margin-top: 20px;
+      padding-left: 20px;
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
     /* Getting Started */
     .getting-started {
       background: linear-gradient(135deg, #e8f0fe 0%, #f0f4ff 100%);
@@ -537,6 +639,10 @@
       .getting-started {
         padding: 32px 24px;
       }
+
+      .workflow-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -547,6 +653,7 @@
       <div class="nav-content">
         <a href="#" class="nav-brand"><img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/browser-control.svg" alt="Browser Control Logo"> Browser Control</a>
         <ul class="nav-links">
+          <li><a href="#featured-workflow">🔐 Authenticated Automation</a></li>
           <li><a href="#features">Features</a></li>
           <li><a href="#tools">Tools</a></li>
           <li><a href="#getting-started">Get Started</a></li>
@@ -562,8 +669,10 @@
     <div class="container">
       <h1>Control Your Browser with AI</h1>
       <p>Give AI agents full control of Chrome and Edge with Model Context Protocol. Automate everything from navigation to DOM manipulation.</p>
+      <p style="font-size: 16px; opacity: 0.9; margin-top: -16px;">🔐 Works inside your real, already-logged-in browser sessions — no credentials shared, no headless re-login.</p>
       <div class="cta-buttons">
         <a href="#getting-started" class="btn btn-secondary">🚀 Get Started</a>
+        <a href="#featured-workflow" class="btn" style="background: white; color: var(--primary-dark);">🔐 See Authenticated Automation</a>
       </div>
     </div>
   </div>
@@ -715,68 +824,26 @@
         
         <div class="step" data-step="1">
           <strong>Install the Extension</strong>
-          <p>Choose your browser and install the extension:</p>
+          <p>Install from the Chrome Web Store — the same listing also works in Microsoft Edge:</p>
           <div style="display: flex; gap: 16px; margin: 16px 0; flex-wrap: wrap; align-items: flex-start;">
-            <div class="btn-disabled-tooltip">
-              <button class="btn" style="background: white; color: #202124; border: 2px solid #dadce0;" disabled>
-                <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/chrome.svg" alt="Chrome" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Chrome Store
-              </button>
-              <span class="tooltip-text">Under review</span>
-            </div>
-            <div class="btn-disabled-tooltip">
-              <button class="btn" style="background: white; color: #202124; border: 2px solid #dadce0;" disabled>
-                <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/edge.svg" alt="Edge" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Edge Store
-              </button>
-              <span class="tooltip-text">Under review</span>
-            </div>
+            <a href="https://chromewebstore.google.com/detail/browser-control-bridge/kdmdehebohgpoeohpdlhhkkhcnmbmefe" target="_blank" rel="noopener" class="btn btn-store">
+              <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/chrome.svg" alt="Chrome" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Add to Chrome
+            </a>
+            <a href="https://chromewebstore.google.com/detail/browser-control-bridge/kdmdehebohgpoeohpdlhhkkhcnmbmefe" target="_blank" rel="noopener" class="btn btn-store">
+              <img src="https://data.arjun.tools/storage/v1/object/public/static/logo/svg/edge.svg" alt="Edge" style="width: 18px; height: 18px; margin-right: 8px; object-fit: contain;"> Add to Edge
+            </a>
           </div>
-          <p style="font-size: 12px; color: #ea4335; margin-top: 12px;"><strong>⚠️ Under Review:</strong> Extensions are currently under review on Chrome Web Store and Microsoft Edge Add-ons. Use the method below to load from GitHub.</p>
+          <p style="font-size: 12px; color: var(--muted); margin-top: 12px;">✅ <strong>Live on Chrome Web Store</strong> and installable in Edge from the same listing. A native Edge Add-ons listing is still under review.</p>
         </div>
 
         <div class="step" data-step="2">
-          <strong>Load Extension from GitHub (Temporary)</strong>
-          <p>While the extension is under review, load it directly from source:</p>
-          
-          <div style="margin: 16px 0; font-size: 14px; color: var(--muted); line-height: 1.8;">
-            <div style="margin-bottom: 16px;">
-              <strong style="color: var(--text);">1. Clone or download the repository:</strong>
-              <div class="code-block">git clone https://github.com/arjun-g/browser-control.git</div>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-              <strong style="color: var(--text);">2. Open your browser's extension page:</strong>
-              <div style="margin-left: 20px; margin-top: 8px;">
-                <div><strong>Chrome:</strong> chrome://extensions/</div>
-                <div><strong>Edge:</strong> edge://extensions/</div>
-              </div>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-              <strong style="color: var(--text);">3. Enable Developer mode</strong>
-              <p style="margin: 4px 0; color: var(--muted);">(toggle in top-right corner)</p>
-            </div>
-            
-            <div style="margin-bottom: 16px;">
-              <strong style="color: var(--text);">4. Click "Load unpacked" button</strong>
-            </div>
-            
-            <div>
-              <strong style="color: var(--text);">5. Navigate to browser-control/packages/extension</strong>
-              <p style="margin: 4px 0; color: var(--muted);">and select the folder</p>
-            </div>
-          </div>
-          
-          <p style="font-size: 12px; color: var(--muted); margin-top: 16px;">The extension will load with a temporary ID. Once it's available on official stores, you can install from there instead.</p>
-        </div>
-
-        <div class="step" data-step="3">
           <strong>Start the MCP Server</strong>
           <p>Run the local MCP server to establish the connection between your AI client and browser:</p>
           <div class="code-block">npm install -g @browser-control/mcp-server
 mcp-server</div>
         </div>
 
-        <div class="step" data-step="4">
+        <div class="step" data-step="3">
           <strong>Configure Your AI Client</strong>
           <p>Add the MCP server to your AI client configuration:</p>
           
@@ -925,39 +992,92 @@ mcp-server</div>
       </div>
     </div>
 
+    <div class="section" id="featured-workflow">
+      <h2>🔐 Featured: Automate Inside Your Real, Logged-In Sessions</h2>
+      <p class="use-case-note">Browser Control drives the browser you're already signed into. There's no credential handoff, no re-login, and no headless bot that gets blocked by SSO or 2FA — the agent simply acts through your existing authenticated session.</p>
+
+      <div class="demo-video-feature">
+        <div class="demo-video">
+          <iframe
+            src="https://www.youtube.com/embed/R170s6L14uc"
+            title="Browser Control - Demo"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen></iframe>
+        </div>
+      </div>
+
+      <div class="workflow-grid">
+        <div class="workflow-card">
+          <h3>Authenticated Workflow Automation</h3>
+          <p style="color: var(--muted); line-height: 1.7;">This is the flagship use case because it's something headless scrapers and generic automation tools can't do safely: work inside admin panels, internal dashboards, and logged-in product flows using the session that's already open in your browser.</p>
+
+          <div class="workflow-steps">
+            <div class="workflow-step">
+              <strong>1. Already signed in, no extra setup</strong>
+              <p>The agent reuses your existing logged-in tab — no API keys, service accounts, or stored passwords required.</p>
+            </div>
+            <div class="workflow-step">
+              <strong>2. Navigate the internal tool</strong>
+              <p>It opens the right dashboard, admin page, or authenticated report exactly as you would.</p>
+            </div>
+            <div class="workflow-step">
+              <strong>3. Perform the real task</strong>
+              <p>Click through filters, fill fields, trigger exports, or update records inside the authenticated app.</p>
+            </div>
+            <div class="workflow-step">
+              <strong>4. Return verified results</strong>
+              <p>It captures a screenshot and structured data from the page, so you can trust the output came from the real session.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-card">
+          <h3>Demo Showcase</h3>
+          <p>Watch the agent operate a real, already-signed-in Cloudflare Web Analytics dashboard: it reads every key metric for the last 24 hours, switches the date range to the last 7 days, reads them again, and returns a side-by-side comparison with screenshots &mdash; something a headless scraper can't safely do behind your login.</p>
+
+          <div class="code-block">Example prompt:
+"In the browser tab, read all the key metrics for the last 24 hours &mdash; visits, page views, load time, Core Web Vitals, top countries, referrers, browsers, and devices. Then switch the date range to the last 7 days and read the same metrics. Give me a side-by-side comparison highlighting what changed, and screenshot both views."</div>
+
+          <ul class="demo-list">
+            <li>Works with SSO, 2FA, and session-based auth already in your browser</li>
+            <li>No credentials ever passed to the AI client or MCP server</li>
+            <li>Ideal for internal tools, admin panels, and back-office workflows</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <!-- Use Cases -->
     <div class="section">
-      <h2>Use Cases</h2>
+      <h2>More Use Cases</h2>
+      <p class="use-case-note">Browser Control works best where an AI agent needs to interact with a live browser, inspect the page state, and return evidence instead of just scraping static HTML.</p>
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">🤖</div>
-          <h3>AI Web Automation</h3>
-          <p>Let AI agents handle repetitive web tasks: data extraction, form filling, screenshots, and testing.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🧪</div>
-          <h3>Automated Testing</h3>
-          <p>Write tests in your preferred language and use AI for intelligent test automation and debugging.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3>Web Scraping</h3>
-          <p>Let AI understand and extract data from complex dynamic websites with natural language instructions.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">🔍</div>
-          <h3>Performance Analysis</h3>
-          <p>AI agents can analyze Core Web Vitals, performance metrics, and suggest optimizations automatically.</p>
+          <div class="feature-icon">✅</div>
+          <h3>Smoke Tests for Real Web Flows</h3>
+          <p>Have an AI agent open a page, fill a form, submit it, wait for a success state, and capture screenshots or console evidence for each run.</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">🐛</div>
-          <h3>Bug Investigation</h3>
-          <p>Use AI to systematically reproduce bugs, collect evidence, and generate detailed bug reports.</p>
+          <h3>Bug Reproduction with Evidence</h3>
+          <p>Let an agent reproduce UI bugs step by step, then return DOM snapshots, screenshots, console logs, and exact reproduction notes.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">📈</div>
-          <h3>Competitive Analysis</h3>
-          <p>Monitor competitor websites automatically and extract insights using AI analysis.</p>
+          <div class="feature-icon">📚</div>
+          <h3>Research and Structured Extraction</h3>
+          <p>Open multiple tabs, compare pages, extract targeted DOM sections, and summarize findings from dynamic sites in a structured format.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚙️</div>
+          <h3>Performance and Frontend Audits</h3>
+          <p>Measure Web Vitals, inspect console output, and combine runtime browser data with screenshots to spot regressions and UX issues.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📥</div>
+          <h3>Download and Document Verification</h3>
+          <p>Trigger downloads, inspect resulting files, and verify that generated reports, exports, and customer-facing artifacts are correct.</p>
         </div>
       </div>
     </div>

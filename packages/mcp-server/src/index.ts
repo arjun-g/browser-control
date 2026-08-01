@@ -22,7 +22,7 @@ process.stderr.write(`Browser bridge listening on ws://127.0.0.1:${bridge.port}\
 
 const server = new McpServer({
   name: "browser-control-mcp",
-  version: "0.2.1",
+  version: "0.2.3",
 });
 
 const browserParam = z.enum(["chrome", "edge", "firefox"]).optional();
@@ -51,6 +51,7 @@ function extractImageFromDataUrl(dataUrl: string): { mimeType: string; data: str
 
 server.registerTool("list_browser_clients", {
   description: "List connected browser extension clients.",
+  annotations: { title: "List Browser Clients", readOnlyHint: true },
 }, async () => {
   const clients = bridge.listClients();
   return { content: [{ type: "text", text: JSON.stringify({ clients }, null, 2) }] };
@@ -58,6 +59,7 @@ server.registerTool("list_browser_clients", {
 
 server.registerTool("list_tabs", {
   description: "List all open tabs with their id, url, title, and active state.",
+  annotations: { title: "List Tabs", readOnlyHint: true },
   inputSchema: { browser: browserParam },
 }, async ({ browser }) => {
   const result = await bridge.sendCommand({ action: "list_tabs", params: {}, preferredBrowser: browser });
@@ -66,6 +68,7 @@ server.registerTool("list_tabs", {
 
 server.registerTool("navigate", {
   description: "Navigate a tab to a URL. Uses the active tab if no tabId is given.",
+  annotations: { title: "Navigate", destructiveHint: true },
   inputSchema: {
     url: z.string().url(),
     tabId: tabIdParam,
@@ -78,6 +81,7 @@ server.registerTool("navigate", {
 
 server.registerTool("new_tab", {
   description: "Open a new browser tab, optionally navigating to a URL.",
+  annotations: { title: "Open New Tab", destructiveHint: true },
   inputSchema: {
     url: z.string().url().optional(),
     active: z.boolean().optional(),
@@ -90,6 +94,7 @@ server.registerTool("new_tab", {
 
 server.registerTool("back", {
   description: "Go back in the active tab's history.",
+  annotations: { title: "Go Back", destructiveHint: true },
   inputSchema: { browser: browserParam },
 }, async ({ browser }) => {
   const result = await bridge.sendCommand({ action: "back", params: {}, preferredBrowser: browser });
@@ -98,6 +103,7 @@ server.registerTool("back", {
 
 server.registerTool("forward", {
   description: "Go forward in the active tab's history.",
+  annotations: { title: "Go Forward", destructiveHint: true },
   inputSchema: { browser: browserParam },
 }, async ({ browser }) => {
   const result = await bridge.sendCommand({ action: "forward", params: {}, preferredBrowser: browser });
@@ -106,6 +112,7 @@ server.registerTool("forward", {
 
 server.registerTool("click", {
   description: "Click an element by CSS selector using CDP mouse events.",
+  annotations: { title: "Click Element", destructiveHint: true },
   inputSchema: {
     selector: z.string().min(1),
     button: z.enum(["left", "right", "middle"]).optional(),
@@ -125,6 +132,7 @@ server.registerTool("click", {
 
 server.registerTool("type", {
   description: "Type text into an element using CDP keyboard input.",
+  annotations: { title: "Type Text", destructiveHint: true },
   inputSchema: {
     selector: z.string().min(1),
     text: z.string(),
@@ -146,6 +154,7 @@ server.registerTool("type", {
 
 server.registerTool("keypress", {
   description: "Send a keypress via CDP to the active element.",
+  annotations: { title: "Send Keypress", destructiveHint: true },
   inputSchema: {
     key: z.string().min(1),
     code: z.string().optional(),
@@ -164,6 +173,7 @@ server.registerTool("keypress", {
 
 server.registerTool("scroll", {
   description: "Scroll the page using CDP mouse wheel events.",
+  annotations: { title: "Scroll Page", destructiveHint: true },
   inputSchema: {
     deltaX: z.number().optional(),
     deltaY: z.number().optional(),
@@ -183,6 +193,7 @@ server.registerTool("scroll", {
 
 server.registerTool("read_dom", {
   description: "Read the current page DOM outerHTML.",
+  annotations: { title: "Read DOM", readOnlyHint: true },
   inputSchema: {
     maxChars: z.number().int().positive().max(2_000_000).optional(),
     tabId: tabIdParam,
@@ -200,6 +211,7 @@ server.registerTool("read_dom", {
 
 server.registerTool("screenshot", {
   description: "Capture a screenshot using CDP. Supports full-page capture.",
+  annotations: { title: "Capture Screenshot", readOnlyHint: true },
   inputSchema: {
     fullPage: z.boolean().optional(),
     format: z.enum(["png", "jpeg"]).optional(),
@@ -239,6 +251,7 @@ server.registerTool("screenshot", {
 
 server.registerTool("wait_for_selector", {
   description: "Wait until a CSS selector appears and optionally becomes visible.",
+  annotations: { title: "Wait For Selector", readOnlyHint: true },
   inputSchema: {
     selector: z.string().min(1),
     visible: z.boolean().optional(),
@@ -259,6 +272,7 @@ server.registerTool("wait_for_selector", {
 
 server.registerTool("wait_for_navigation", {
   description: "Wait for the active tab to finish navigating, optionally matching a URL substring.",
+  annotations: { title: "Wait For Navigation", readOnlyHint: true },
   inputSchema: {
     urlIncludes: z.string().optional(),
     timeoutMs: z.number().int().positive().max(120000).optional(),
@@ -278,6 +292,7 @@ server.registerTool("wait_for_navigation", {
 
 server.registerTool("cdp_command", {
   description: "Run a raw Chrome DevTools Protocol command on a tab.",
+  annotations: { title: "Run CDP Command", destructiveHint: true, openWorldHint: true },
   inputSchema: {
     method: z.string().min(1),
     commandParams: z.record(z.unknown()).optional(),
@@ -296,6 +311,7 @@ server.registerTool("cdp_command", {
 
 server.registerTool("get_current_tab", {
   description: "Get the current active tab information.",
+  annotations: { title: "Get Current Tab", readOnlyHint: true },
   inputSchema: { browser: browserParam },
 }, async ({ browser }) => {
   const result = await bridge.sendCommand({ action: "get_current_tab", params: {}, preferredBrowser: browser });
@@ -304,6 +320,7 @@ server.registerTool("get_current_tab", {
 
 server.registerTool("close_tab", {
   description: "Close a single tab.",
+  annotations: { title: "Close Tab", destructiveHint: true },
   inputSchema: { tabId: tabIdParam, browser: browserParam },
 }, async ({ tabId, browser }) => {
   const result = await bridge.sendCommand({ action: "close_tab", params: { tabId }, preferredBrowser: browser });
@@ -312,6 +329,7 @@ server.registerTool("close_tab", {
 
 server.registerTool("close_tabs", {
   description: "Close multiple tabs by ID.",
+  annotations: { title: "Close Tabs", destructiveHint: true },
   inputSchema: {
     tabIds: z.array(z.number().int().positive()),
     browser: browserParam,
@@ -323,6 +341,7 @@ server.registerTool("close_tabs", {
 
 server.registerTool("reload_tab", {
   description: "Reload a tab with optional cache bypass.",
+  annotations: { title: "Reload Tab", destructiveHint: true },
   inputSchema: {
     tabId: tabIdParam,
     bypassCache: z.boolean().optional(),
@@ -339,6 +358,7 @@ server.registerTool("reload_tab", {
 
 server.registerTool("mouse_move", {
   description: "Move the mouse to a specific position on the page.",
+  annotations: { title: "Move Mouse", destructiveHint: true },
   inputSchema: {
     x: z.number(),
     y: z.number(),
@@ -357,6 +377,7 @@ server.registerTool("mouse_move", {
 
 server.registerTool("drag_and_drop", {
   description: "Drag an element from a selector to coordinates.",
+  annotations: { title: "Drag And Drop", destructiveHint: true },
   inputSchema: {
     selector: z.string().min(1),
     toX: z.number(),
@@ -376,6 +397,7 @@ server.registerTool("drag_and_drop", {
 
 server.registerTool("focus_element", {
   description: "Focus a DOM element by selector.",
+  annotations: { title: "Focus Element", destructiveHint: true },
   inputSchema: {
     selector: z.string().min(1),
     tabId: tabIdParam,
@@ -393,6 +415,7 @@ server.registerTool("focus_element", {
 
 server.registerTool("blur_element", {
   description: "Blur (unfocus) a DOM element by selector.",
+  annotations: { title: "Blur Element", destructiveHint: true },
   inputSchema: {
     selector: z.string().min(1),
     tabId: tabIdParam,
@@ -410,6 +433,7 @@ server.registerTool("blur_element", {
 
 server.registerTool("scroll_element", {
   description: "Scroll a specific element in a direction.",
+  annotations: { title: "Scroll Element", destructiveHint: true },
   inputSchema: {
     selector: z.string().min(1),
     direction: z.enum(["up", "down", "left", "right"]).optional(),
@@ -429,6 +453,7 @@ server.registerTool("scroll_element", {
 
 server.registerTool("dom_extract_element", {
   description: "Extract text, HTML, value, and custom attributes from a DOM element.",
+  annotations: { title: "Extract Element Data", readOnlyHint: true },
   inputSchema: {
     selector: z.string().min(1),
     attributes: z.array(z.string()).optional(),
@@ -447,6 +472,7 @@ server.registerTool("dom_extract_element", {
 
 server.registerTool("add_css", {
   description: "Inject CSS styles into the page.",
+  annotations: { title: "Inject CSS", destructiveHint: true },
   inputSchema: {
     css: z.string().min(1),
     tabId: tabIdParam,
@@ -464,6 +490,7 @@ server.registerTool("add_css", {
 
 server.registerTool("execute_javascript", {
   description: "Execute arbitrary JavaScript code on the page.",
+  annotations: { title: "Execute JavaScript", destructiveHint: true, openWorldHint: true },
   inputSchema: {
     code: z.string().min(1),
     tabId: tabIdParam,
@@ -481,6 +508,7 @@ server.registerTool("execute_javascript", {
 
 server.registerTool("set_viewport", {
   description: "Set the browser viewport size.",
+  annotations: { title: "Set Viewport", destructiveHint: true },
   inputSchema: {
     width: z.number().int().positive().optional(),
     height: z.number().int().positive().optional(),
@@ -500,6 +528,7 @@ server.registerTool("set_viewport", {
 
 server.registerTool("emulate_mobile", {
   description: "Emulate a mobile device with specific user agent and viewport.",
+  annotations: { title: "Emulate Mobile Device", destructiveHint: true },
   inputSchema: {
     device: z.enum(["iPhone 12", "iPhone 14", "Pixel 6", "iPad"]).optional(),
     tabId: tabIdParam,
@@ -517,6 +546,7 @@ server.registerTool("emulate_mobile", {
 
 server.registerTool("resize_window", {
   description: "Resize the browser window.",
+  annotations: { title: "Resize Window", destructiveHint: true },
   inputSchema: {
     width: z.number().int().positive().optional(),
     height: z.number().int().positive().optional(),
@@ -535,6 +565,7 @@ server.registerTool("resize_window", {
 
 server.registerTool("toggle_fullscreen", {
   description: "Toggle fullscreen mode (F11).",
+  annotations: { title: "Toggle Fullscreen", destructiveHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -551,6 +582,7 @@ server.registerTool("toggle_fullscreen", {
 
 server.registerTool("get_cookies", {
   description: "Get all cookies for a URL.",
+  annotations: { title: "Get Cookies", readOnlyHint: true },
   inputSchema: {
     url: z.string().url().optional(),
     browser: browserParam,
@@ -566,6 +598,7 @@ server.registerTool("get_cookies", {
 
 server.registerTool("set_cookie", {
   description: "Set a cookie.",
+  annotations: { title: "Set Cookie", destructiveHint: true },
   inputSchema: {
     name: z.string().min(1),
     value: z.string(),
@@ -584,6 +617,7 @@ server.registerTool("set_cookie", {
 
 server.registerTool("delete_cookie", {
   description: "Delete a cookie by name.",
+  annotations: { title: "Delete Cookie", destructiveHint: true },
   inputSchema: {
     name: z.string().min(1),
     url: z.string().url().optional(),
@@ -600,6 +634,7 @@ server.registerTool("delete_cookie", {
 
 server.registerTool("get_performance_metrics", {
   description: "Get performance metrics from the page.",
+  annotations: { title: "Get Performance Metrics", readOnlyHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -616,6 +651,7 @@ server.registerTool("get_performance_metrics", {
 
 server.registerTool("get_web_vitals", {
   description: "Get Core Web Vitals (FCP, LCP, CLS) from the page.",
+  annotations: { title: "Get Web Vitals", readOnlyHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -632,6 +668,7 @@ server.registerTool("get_web_vitals", {
 
 server.registerTool("get_console_logs", {
   description: "Get console logs captured from the page.",
+  annotations: { title: "Get Console Logs", readOnlyHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -648,6 +685,7 @@ server.registerTool("get_console_logs", {
 
 server.registerTool("dom_snapshot", {
   description: "Capture a full DOM snapshot of the current page.",
+  annotations: { title: "Capture DOM Snapshot", readOnlyHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -664,6 +702,7 @@ server.registerTool("dom_snapshot", {
 
 server.registerTool("minimal_snapshot", {
   description: "Capture a minimal snapshot focusing on key interactive elements.",
+  annotations: { title: "Capture Minimal Snapshot", readOnlyHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -680,6 +719,7 @@ server.registerTool("minimal_snapshot", {
 
 server.registerTool("semantic_snapshot", {
   description: "Capture a semantic snapshot with headings, buttons, links, forms, and inputs.",
+  annotations: { title: "Capture Semantic Snapshot", readOnlyHint: true },
   inputSchema: {
     tabId: tabIdParam,
     browser: browserParam,
@@ -696,6 +736,7 @@ server.registerTool("semantic_snapshot", {
 
 server.registerTool("list_downloads", {
   description: "List all downloads.",
+  annotations: { title: "List Downloads", readOnlyHint: true },
   inputSchema: {
     query: z.record(z.unknown()).optional(),
     browser: browserParam,
@@ -711,6 +752,7 @@ server.registerTool("list_downloads", {
 
 server.registerTool("create_tab_group", {
   description: "Create a tab group.",
+  annotations: { title: "Create Tab Group", destructiveHint: true },
   inputSchema: {
     title: z.string().optional(),
     color: z.enum(["grey", "blue", "red", "yellow", "green", "pink", "purple", "cyan"]).optional(),
@@ -728,6 +770,7 @@ server.registerTool("create_tab_group", {
 
 server.registerTool("delete_tab_group", {
   description: "Delete a tab group.",
+  annotations: { title: "Delete Tab Group", destructiveHint: true },
   inputSchema: {
     groupId: z.number().int().positive(),
     browser: browserParam,

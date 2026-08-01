@@ -4,6 +4,20 @@ Control Chrome and Edge with AI agents through Model Context Protocol (MCP).
 
 Website: https://browser-control.arjun.tools
 
+## 🔐 Flagship Use Case: Automate Inside Your Real, Logged-In Sessions
+
+Browser Control drives the browser you're already signed into — not a headless copy, not a service account. That means it can operate inside admin panels, internal dashboards, and SSO/2FA-protected apps that ordinary scrapers and headless bots cannot reach safely.
+
+- No credentials, API keys, or passwords are ever shared with the AI client or MCP server.
+- No re-login, no session replay, no cookie exporting — the agent acts through the tab you already have open.
+- Ideal for internal tools, admin consoles, and back-office workflows that require a real authenticated session.
+
+Example prompt:
+
+```text
+In our admin dashboard, find all users who signed up this week, export the list, and confirm the export succeeded with a screenshot.
+```
+
 ## What It Does
 
 Browser Control Bridge connects your MCP client (Claude, GitHub Copilot, Cursor, Continue.dev, and others) to a local browser extension so your agent can:
@@ -25,28 +39,48 @@ Browser Control Bridge connects your MCP client (Claude, GitHub Copilot, Cursor,
 - Tab and window management
 - CDP support for advanced workflows
 
+## Best Use Cases
+
+- **Automate authenticated browser tasks inside admin panels and internal tools** (flagship use case — see above).
+- Smoke-test critical web flows such as signup, login, checkout, or contact forms.
+- Reproduce frontend bugs and attach evidence like screenshots, DOM output, and console logs.
+- Extract structured data from dynamic pages that require real rendering and interaction.
+- Run lightweight performance and UX checks with Web Vitals, console output, and viewport changes.
+- Verify downloads and generated artifacts from browser-based workflows.
+
+## Featured Demo Workflow
+
+▶️ **Watch the demo:** [Browser Control — Demo (YouTube)](https://www.youtube.com/watch?v=R170s6L14uc)
+
+The demo shows the agent operating a real, already-signed-in Cloudflare Web Analytics dashboard — reading every key metric for the last 24 hours, switching the date range to the last 7 days, and returning a side-by-side comparison with screenshots.
+
+Why this one works well:
+
+- It demonstrates the core differentiator: acting through a real authenticated session, not a scraper (Cloudflare Web Analytics has no public read API on the free tier, so driving the logged-in dashboard is the only way).
+- It uses the core toolchain: `navigate`, `click`, `read_dom`/`semantic_snapshot`, and `screenshot`.
+- It produces a clear, verifiable result (two captured views + a structured comparison) that a headless tool couldn't easily obtain.
+
+Example prompt:
+
+```text
+In the browser tab, read all the key metrics for the last 24 hours — visits, page views, load time, Core Web Vitals, top countries, referrers, browsers, and devices. Then switch the date range to the last 7 days and read the same metrics. Give me a side-by-side comparison highlighting what changed, and screenshot both views.
+```
+
+Typical agent flow:
+
+1. Use the already-authenticated tab — no login step needed.
+2. Read the key metrics for the current date range.
+3. Change the date range (e.g., 24 hours → 7 days).
+4. Re-read the same metrics and compare.
+5. Capture screenshots and return the side-by-side result.
+
 ## Get Started
 
 ### 1. Install Extension
 
-Store listings are currently under review. Until they are live, load the extension from GitHub.
+Install from the [Chrome Web Store](https://chromewebstore.google.com/detail/browser-control-bridge/kdmdehebohgpoeohpdlhhkkhcnmbmefe) — the same listing also works in Microsoft Edge. A native Edge Add-ons listing is still under review.
 
-### 2. Load Extension from GitHub (Temporary)
-
-```bash
-git clone https://github.com/arjun-g/browser-control.git
-```
-
-Then in your browser:
-
-1. Open extensions page:
-   - Chrome: `chrome://extensions/`
-   - Edge: `edge://extensions/`
-2. Enable Developer mode
-3. Click "Load unpacked"
-4. Select `packages/extension`
-
-### 3. Start MCP Server
+### 2. Start MCP Server
 
 Use published package via `npx`:
 
@@ -68,7 +102,7 @@ Optional flags/env:
 - `BROWSER_BRIDGE_TOKEN` to require token auth
 - `BROWSER_AGENT_NAME` as fallback agent name
 
-### 4. Configure Your AI Client
+### 3. Configure Your AI Client
 
 Common MCP config:
 
